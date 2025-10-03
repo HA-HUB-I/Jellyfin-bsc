@@ -12,8 +12,8 @@
         "changelog": "Fixed JSON deserialization error for Radio field type (bool instead of string). Plugin now correctly retrieves and processes all channel data from Bulsatcom API.",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.1.1/plugin.zip",
-        "checksum": "PLACEHOLDER",
-        "timestamp": "2025-01-17T15:00:00Z"
+        "checksum": "CD0926C70DFE8D8B62E13FD66BC491DE",
+        "timestamp": "2025-10-03T19:45:10Z"
       }
     ]
   }
