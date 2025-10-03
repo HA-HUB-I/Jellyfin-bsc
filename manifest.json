@@ -1,20 +1,18 @@
-[
-  {
-    "category": "Live TV",
-    "guid": "f996e2e1-3335-4b39-adf2-417d38b18b6d",
-    "name": "Bulsatcom File Generator",
-    "description": "Generates M3U and EPG files from Bulsatcom IPTV service with comprehensive configuration options.",
-    "owner": "HA-HUB-I",
-    "overview": "This plugin automatically generates M3U playlist and XMLTV EPG files from Bulsatcom IPTV service. Features include credential validation, configurable refresh intervals, content filtering, error handling, and a modern configuration interface.",
-    "versions": [
-      {
-        "version": "1.0.7",
-        "changelog": "Enhanced configuration interface with validation, error handling, and comprehensive settings. Added content filtering, debug options, and improved user experience.",
-        "targetAbi": "10.9.0.0",
-        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.0.7/plugin.zip",
-        "checksum": "31E42F0593F74951A85C93958DA820A2",
-        "timestamp": "2025-10-03T18:44:07Z"
-      }
-    ]
-  }
-]
+{
+  "category": "Live TV",
+  "guid": "f996e2e1-3335-4b39-adf2-417d38b18b6d",
+  "name": "Bulsatcom File Generator",
+  "description": "Generates M3U and EPG files from Bulsatcom IPTV service with comprehensive configuration options.",
+  "owner": "HA-HUB-I",
+  "overview": "This plugin automatically generates M3U playlist and XMLTV EPG files from Bulsatcom IPTV service. Features include credential validation, configurable refresh intervals, content filtering, error handling, and a modern configuration interface.",
+  "versions": [
+    {
+      "version": "1.0.7",
+      "changelog": "Enhanced configuration interface with validation, error handling, and comprehensive settings. Added content filtering, debug options, and improved user experience.",
+      "targetAbi": "10.9.0.0",
+      "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.0.7/plugin.zip",
+      "checksum": "31E42F0593F74951A85C93958DA820A2",
+      "timestamp": "2025-10-03T18:44:07Z"
+    }
+  ]
+}
