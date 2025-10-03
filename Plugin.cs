@@ -17,7 +17,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
     /// <summary>
     /// Minimal Bulsatcom plugin for Jellyfin - focused on stability
     /// </summary>
-    public class Plugin : BasePlugin<PluginConfiguration>
+    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         public override string Name => "Bulsatcom File Generator";
         public override Guid Id => Guid.Parse("f996e2e1-3335-4b39-adf2-417d38b18b6d");
@@ -35,6 +35,21 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         /// Gets the plugin configuration
         /// </summary>
         public PluginConfiguration PluginConfiguration => Configuration;
+
+        /// <summary>
+        /// Gets the configuration pages for the plugin
+        /// </summary>
+        public IEnumerable<PluginPageInfo> GetPages()
+        {
+            return new[]
+            {
+                new PluginPageInfo
+                {
+                    Name = "Settings",
+                    EmbeddedResourcePath = "Jellyfin.Plugin.BulsatcomChannel.Configuration.basic-config.html"
+                }
+            };
+        }
     }
 
     /// <summary>
