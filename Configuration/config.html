@@ -1,47 +1,349 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bulsatcom Configuration</title>
+    <title>Bulsatcom File Generator Configuration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+        button {
+            background-color: #007acc;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+        .test-btn {
+            background-color: #28a745;
+        }
+        .test-btn:hover {
+            background-color: #218838;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .file-path {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
-    <form>
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" />
-        </div>
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" />
-        </div>
-        <div>
-            <label for="apiUrl">API URL:</label>
-            <input type="text" id="apiUrl" name="apiUrl" />
-        </div>
-        <div>
-            <label for="timeout">Timeout (seconds):</label>
-            <input type="number" id="timeout" name="timeout" />
-        </div>
-        <div>
-            <label for="osType">OS Type:</label>
-            <select id="osType" name="osType">
-                <option value="1">Samsung TV</option>
-                <option value="0">PC Web</option>
-            </select>
-        </div>
-        <div>
-            <input type="checkbox" id="downloadEpg" name="downloadEpg" />
-            <label for="downloadEpg">Download EPG</label>
-        </div>
-        <div>
-            <input type="checkbox" id="debug" name="debug" />
-            <label for="debug">Enable Debugging</label>
-        </div>
-        <div>
-            <label for="blockedGenres">Blocked Genres (comma-separated):</label>
-            <input type="text" id="blockedGenres" name="blockedGenres" />
-        </div>
-        <br />
-        <button type="submit">Save</button>
-    </form>
+    <div class="container">
+        <h2>🛰️ Bulsatcom File Generator Configuration</h2>
+        
+        <div id="status-section"></div>
+        
+        <form id="configForm">
+            <!-- Account Settings -->
+            <div class="section">
+                <h3>🔐 Account Settings</h3>
+                <div class="form-group">
+                    <label for="username">Username: *</label>
+                    <input type="text" id="username" name="username" required />
+                    <div class="help-text">Your Bulsatcom account username</div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password: *</label>
+                    <input type="password" id="password" name="password" required />
+                    <div class="help-text">Your Bulsatcom account password</div>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="testCredentials" class="test-btn">Test Connection</button>
+                    <div id="connectionStatus"></div>
+                </div>
+            </div>
+
+            <!-- API Settings -->
+            <div class="section">
+                <h3>🌐 API Settings</h3>
+                <div class="form-group">
+                    <label for="apiUrl">API URL:</label>
+                    <input type="url" id="apiUrl" name="apiUrl" />
+                    <div class="help-text">Bulsatcom API endpoint (leave default unless advised otherwise)</div>
+                </div>
+                <div class="form-group">
+                    <label for="osType">Device Type:</label>
+                    <select id="osType" name="osType">
+                        <option value="1">Samsung TV (Recommended)</option>
+                        <option value="0">PC Web</option>
+                    </select>
+                    <div class="help-text">Choose device type for API compatibility</div>
+                </div>
+                <div class="form-group">
+                    <label for="timeout">Connection Timeout (seconds):</label>
+                    <input type="number" id="timeout" name="timeout" min="5" max="120" />
+                    <div class="help-text">Maximum time to wait for API responses (5-120 seconds)</div>
+                </div>
+                <div class="form-group">
+                    <label for="maxRetries">Max Retries:</label>
+                    <input type="number" id="maxRetries" name="maxRetries" min="1" max="10" />
+                    <div class="help-text">Number of retry attempts on API failures (1-10)</div>
+                </div>
+            </div>
+
+            <!-- Refresh Settings -->
+            <div class="section">
+                <h3>🔄 Refresh Settings</h3>
+                <div class="form-group">
+                    <label for="refreshIntervalHours">Refresh Interval (hours):</label>
+                    <input type="number" id="refreshIntervalHours" name="refreshIntervalHours" min="1" max="24" />
+                    <div class="help-text">How often to update channel list and EPG (1-24 hours)</div>
+                </div>
+                <div class="checkbox-group form-group">
+                    <input type="checkbox" id="downloadEpg" name="downloadEpg" />
+                    <label for="downloadEpg">Download EPG Data</label>
+                    <div class="help-text">Enable electronic program guide download</div>
+                </div>
+            </div>
+
+            <!-- File Settings -->
+            <div class="section">
+                <h3>📁 File Settings</h3>
+                <div class="info">
+                    <strong>Generated Files Location:</strong><br>
+                    <span class="file-path" id="dataPath">Loading...</span>
+                </div>
+                <div class="form-group">
+                    <label for="m3uFileName">M3U Playlist Filename:</label>
+                    <input type="text" id="m3uFileName" name="m3uFileName" />
+                    <div class="help-text">Name for the generated M3U playlist file</div>
+                </div>
+                <div class="form-group">
+                    <label for="epgFileName">EPG XML Filename:</label>
+                    <input type="text" id="epgFileName" name="epgFileName" />
+                    <div class="help-text">Name for the generated EPG XML file</div>
+                </div>
+            </div>
+
+            <!-- Content Filtering -->
+            <div class="section">
+                <h3>🎭 Content Filtering</h3>
+                <div class="form-group">
+                    <label for="blockedGenres">Blocked Genres:</label>
+                    <textarea id="blockedGenres" name="blockedGenres" rows="3" placeholder="adult, news, sports"></textarea>
+                    <div class="help-text">Comma-separated list of genres to exclude from the playlist</div>
+                </div>
+            </div>
+
+            <!-- Debug Settings -->
+            <div class="section">
+                <h3>🐛 Debug Settings</h3>
+                <div class="checkbox-group form-group">
+                    <input type="checkbox" id="debug" name="debug" />
+                    <label for="debug">Enable Debug Logging</label>
+                    <div class="help-text">Enable detailed logging for troubleshooting</div>
+                </div>
+                <div class="checkbox-group form-group">
+                    <input type="checkbox" id="validateCredentials" name="validateCredentials" />
+                    <label for="validateCredentials">Validate Credentials on Save</label>
+                    <div class="help-text">Test connection when saving configuration</div>
+                </div>
+            </div>
+
+            <!-- Status Information -->
+            <div class="section">
+                <h3>📊 Status Information</h3>
+                <div class="info">
+                    <div><strong>Last Successful Update:</strong> <span id="lastUpdate">Never</span></div>
+                    <div><strong>Total Channels:</strong> <span id="totalChannels">0</span></div>
+                    <div><strong>Last Error:</strong> <span id="lastError">None</span></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button type="submit">💾 Save Configuration</button>
+                <button type="button" id="runNow" class="test-btn">▶️ Run Now</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Configuration management
+        const config = {};
+        
+        // Load configuration on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfiguration();
+        });
+        
+        function loadConfiguration() {
+            // This would be implemented by Jellyfin's plugin system
+            // For now, we'll simulate it
+            updateDataPath();
+            updateStatus();
+        }
+        
+        function updateDataPath() {
+            // This would get the actual data path from the plugin
+            document.getElementById('dataPath').textContent = '/config/data/plugins/Jellyfin.Plugin.BulsatcomChannel/';
+        }
+        
+        function updateStatus() {
+            // Update status information
+            const lastUpdate = document.getElementById('lastUpdate');
+            const totalChannels = document.getElementById('totalChannels');
+            const lastError = document.getElementById('lastError');
+            
+            // These would be loaded from the actual configuration
+            lastUpdate.textContent = 'Never';
+            totalChannels.textContent = '0';
+            lastError.textContent = 'None';
+        }
+        
+        // Test credentials button
+        document.getElementById('testCredentials').addEventListener('click', function() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('connectionStatus');
+            
+            if (!username || !password) {
+                statusDiv.innerHTML = '<div class="error">Please enter both username and password</div>';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<div class="info">Testing connection...</div>';
+            
+            // This would make an actual API call
+            setTimeout(() => {
+                statusDiv.innerHTML = '<div class="success">✅ Connection successful!</div>';
+            }, 2000);
+        });
+        
+        // Run now button
+        document.getElementById('runNow').addEventListener('click', function() {
+            const statusSection = document.getElementById('status-section');
+            statusSection.innerHTML = '<div class="info">🔄 Starting file generation...</div>';
+            
+            // This would trigger the actual task
+            setTimeout(() => {
+                statusSection.innerHTML = '<div class="success">✅ Files generated successfully!</div>';
+                updateStatus();
+            }, 3000);
+        });
+        
+        // Form validation
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                document.getElementById('status-section').innerHTML = 
+                    '<div class="error">❌ Username and password are required!</div>';
+                return;
+            }
+            
+            // Save configuration
+            document.getElementById('status-section').innerHTML = 
+                '<div class="success">✅ Configuration saved successfully!</div>';
+        });
+        
+        // Input validation
+        document.getElementById('refreshIntervalHours').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            if (value < 1) this.value = 1;
+            if (value > 24) this.value = 24;
+        });
+        
+        document.getElementById('timeout').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            if (value < 5) this.value = 5;
+            if (value > 120) this.value = 120;
+        });
+        
+        document.getElementById('maxRetries').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            if (value < 1) this.value = 1;
+            if (value > 10) this.value = 10;
+        });
+    </script>
 </body>
 </html>

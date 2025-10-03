@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Jellyfin.Plugin.BulsatcomChannel")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4e80a7445afae890814ebd20507ee97fcab15bcf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+54c335b84e103dc267d87179c644262271d4c864")]
 [assembly: System.Reflection.AssemblyProductAttribute("Jellyfin.Plugin.BulsatcomChannel")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Jellyfin.Plugin.BulsatcomChannel")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

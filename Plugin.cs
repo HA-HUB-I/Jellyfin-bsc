@@ -67,9 +67,29 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting Bulsatcom file generation.");
+            var config = Plugin.Instance?.Configuration;
+            
+            if (config == null)
+            {
+                _logger.LogError("Plugin configuration is null.");
+                return;
+            }
 
             try
             {
+                // Clear previous error
+                config.LastError = "";
+                
+                // Validate configuration
+                if (string.IsNullOrWhiteSpace(config.Username) || string.IsNullOrWhiteSpace(config.Password))
+                {
+                    var error = "Username and password are required. Please configure the plugin settings.";
+                    _logger.LogError(error);
+                    config.LastError = error;
+                    Plugin.Instance?.SaveConfiguration();
+                    return;
+                }
+
                 var dataPath = Plugin.Instance.DataFolderPath;
                 _logger.LogInformation($"Plugin data path: {dataPath}");
 
@@ -78,20 +98,100 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     Directory.CreateDirectory(dataPath);
                 }
 
-                var config = Plugin.Instance.Configuration;
+                // Set HTTP client timeout
+                _httpClient.Timeout = TimeSpan.FromSeconds(config.Timeout);
+                
+                progress.Report(10.0);
 
-                var session = await Login(config.Username, config.Password, config.ApiUrl, config.OsType, cancellationToken);
-                _logger.LogInformation("Successfully logged in.");
-                progress.Report(20.0);
+                // Login with retry logic
+                string session = null;
+                var retryCount = 0;
+                var maxRetries = config.MaxRetries;
+                
+                while (retryCount < maxRetries && session == null)
+                {
+                    try
+                    {
+                        session = await Login(config.Username, config.Password, config.ApiUrl, config.OsType, cancellationToken);
+                        if (!string.IsNullOrEmpty(session))
+                        {
+                            _logger.LogInformation("Successfully logged in.");
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        retryCount++;
+                        _logger.LogWarning($"Login attempt {retryCount} failed: {ex.Message}");
+                        
+                        if (retryCount < maxRetries)
+                        {
+                            await Task.Delay(2000 * retryCount, cancellationToken); // Exponential backoff
+                        }
+                        else
+                        {
+                            throw new Exception($"Failed to login after {maxRetries} attempts: {ex.Message}", ex);
+                        }
+                    }
+                }
 
-                // TODO: Continue translation...
+                if (string.IsNullOrEmpty(session))
+                {
+                    throw new Exception("Failed to obtain session token. Please check your credentials.");
+                }
+
+                progress.Report(30.0);
+
+                // Get channel list
+                var channels = await GetChannelList(config.ApiUrl, cancellationToken);
+                _logger.LogInformation($"Retrieved {channels.Count} channels.");
+                progress.Report(50.0);
+
+                // Download EPG if enabled
+                if (config.DownloadEpg)
+                {
+                    await GetEpg(channels, config.ApiUrl, cancellationToken);
+                    _logger.LogInformation("EPG data downloaded.");
+                }
+                progress.Report(70.0);
+
+                // Generate M3U file
+                var m3uContent = GenerateM3u(channels, config.BlockedGenres);
+                var m3uPath = Path.Combine(dataPath, config.M3uFileName);
+                await File.WriteAllTextAsync(m3uPath, m3uContent, cancellationToken);
+                _logger.LogInformation($"M3U file saved to: {m3uPath}");
+                progress.Report(85.0);
+
+                // Generate XML TV file if EPG is enabled
+                if (config.DownloadEpg)
+                {
+                    var xmlContent = GenerateXmlTv(channels, config.BlockedGenres);
+                    var xmlPath = Path.Combine(dataPath, config.EpgFileName);
+                    await File.WriteAllTextAsync(xmlPath, xmlContent, cancellationToken);
+                    _logger.LogInformation($"EPG XML file saved to: {xmlPath}");
+                }
+
+                // Update configuration with success info
+                config.LastSuccessfulUpdate = DateTime.UtcNow;
+                config.TotalChannels = channels.Count;
+                Plugin.Instance?.SaveConfiguration();
 
                 progress.Report(100.0);
-                _logger.LogInformation("Bulsatcom file generation completed.");
+                _logger.LogInformation($"Bulsatcom file generation completed successfully. Generated {channels.Count} channels.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during Bulsatcom file generation.");
+                var errorMessage = $"Error during Bulsatcom file generation: {ex.Message}";
+                _logger.LogError(ex, errorMessage);
+                
+                // Save error to configuration
+                if (config != null)
+                {
+                    config.LastError = errorMessage;
+                    Plugin.Instance?.SaveConfiguration();
+                }
+                
+                throw;
             }
         }
 
@@ -155,6 +255,75 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             return session ?? string.Empty;
         }
 
+        private async Task<List<BulsatcomChannel>> GetChannelList(string apiUrl, CancellationToken cancellationToken)
+        {
+            var channels = new List<BulsatcomChannel>();
+            
+            try
+            {
+                var channelsUrl = apiUrl + "/tv/channels";
+                var response = await _httpClient.GetAsync(channelsUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                var channelData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+                
+                if (channelData != null)
+                {
+                    foreach (var kvp in channelData)
+                    {
+                        try
+                        {
+                            var channel = JsonSerializer.Deserialize<BulsatcomChannel>(kvp.Value.GetRawText());
+                            if (channel != null)
+                            {
+                                channels.Add(channel);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"Failed to deserialize channel {kvp.Key}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get channel list");
+                throw;
+            }
+            
+            return channels;
+        }
+
+        private string GenerateM3u(List<BulsatcomChannel> channels, string blockedGenres)
+        {
+            var blocked = new HashSet<string>(blockedGenres?.Split(',', StringSplitOptions.RemoveEmptyEntries) 
+                .Select(g => g.Trim()) ?? Array.Empty<string>());
+            
+            var m3u = new StringBuilder();
+            m3u.AppendLine("#EXTM3U");
+            
+            foreach (var channel in channels)
+            {
+                if (!string.IsNullOrEmpty(channel.Genre) && blocked.Contains(channel.Genre))
+                {
+                    continue;
+                }
+                
+                if (!string.IsNullOrEmpty(channel.Sources) && !string.IsNullOrEmpty(channel.Title))
+                {
+                    var channelName = channel.Title;
+                    var streamUrl = channel.Sources;
+                    
+                    m3u.AppendLine($"#EXTINF:-1 tvg-id=\"{channel.EpgName}\" tvg-name=\"{channelName}\" tvg-logo=\"\" group-title=\"{channel.Genre ?? "General"}\",{channelName}");
+                    m3u.AppendLine(streamUrl);
+                }
+            }
+            
+            return m3u.ToString();
+        }
+
         private async Task GetEpg(List<BulsatcomChannel> channels, string apiUrl, CancellationToken cancellationToken)
         {
             foreach (var channel in channels)
@@ -212,12 +381,19 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
+            var config = Plugin.Instance?.Configuration;
+            var intervalHours = config?.RefreshIntervalHours ?? 6;
+            
+            // Ensure interval is within bounds
+            intervalHours = Math.Max(config?.MinRefreshIntervalHours ?? 1, 
+                           Math.Min(config?.MaxRefreshIntervalHours ?? 24, intervalHours));
+            
             return new[]
             {
                 new TaskTriggerInfo
                 {
                     Type = TaskTriggerInfo.TriggerInterval,
-                    IntervalTicks = TimeSpan.FromHours(6).Ticks
+                    IntervalTicks = TimeSpan.FromHours(intervalHours).Ticks
                 }
             };
         }
