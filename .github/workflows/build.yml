@@ -43,6 +43,40 @@ jobs:
           cd dist
           zip -r ../plugin.zip .
 
+      - name: Calculate MD5 checksum
+        id: checksum
+        run: |
+          MD5_HASH=$(md5sum plugin.zip | cut -d ' ' -f 1)
+          echo "md5=$MD5_HASH" >> $GITHUB_OUTPUT
+          echo "MD5 checksum: $MD5_HASH"
+
+      - name: Update manifest with checksum
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          MD5_HASH="${{ steps.checksum.outputs.md5 }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # Update manifest.json with the actual checksum, version and timestamp
+          jq --arg version "$VERSION" \
+             --arg checksum "$MD5_HASH" \
+             --arg timestamp "$TIMESTAMP" \
+             --arg sourceUrl "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin.zip" \
+             '.[0].versions[0].version = $version | 
+              .[0].versions[0].checksum = $checksum | 
+              .[0].versions[0].timestamp = $timestamp |
+              .[0].versions[0].sourceUrl = $sourceUrl' \
+             manifest.json > manifest_updated.json && mv manifest_updated.json manifest.json
+
+      - name: Commit updated manifest
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add manifest.json
+          git commit -m "Update manifest with checksum for ${{ github.ref_name }}" || exit 0
+          git push origin HEAD:main
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

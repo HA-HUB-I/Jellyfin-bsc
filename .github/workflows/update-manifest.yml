@@ -1,0 +1,78 @@
+name: Update Manifest for Development
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'manifest.json'
+      - '*.md'
+      - '.gitignore'
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'Update manifest') }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build plugin
+        run: dotnet build --configuration Release
+
+      - name: Prepare package
+        run: |
+          PLUGIN_DIR="Jellyfin.Plugin.BulsatcomChannel"
+          mkdir -p "dist/${PLUGIN_DIR}"
+          cp "bin/Release/net8.0/${PLUGIN_DIR}.dll" "dist/${PLUGIN_DIR}/"
+          cp plugin.xml "dist/${PLUGIN_DIR}/"
+
+      - name: Create zip archive
+        run: |
+          cd dist
+          zip -r ../plugin.zip .
+
+      - name: Calculate MD5 checksum
+        id: checksum
+        run: |
+          MD5_HASH=$(md5sum plugin.zip | cut -d ' ' -f 1)
+          echo "md5=$MD5_HASH" >> $GITHUB_OUTPUT
+          echo "MD5 checksum: $MD5_HASH"
+
+      - name: Update manifest for development
+        run: |
+          MD5_HASH="${{ steps.checksum.outputs.md5 }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          COMMIT_SHA=${GITHUB_SHA:0:7}
+          
+          # Update manifest.json for development builds
+          jq --arg checksum "$MD5_HASH" \
+             --arg timestamp "$TIMESTAMP" \
+             --arg sourceUrl "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.0.0-dev-$COMMIT_SHA/plugin.zip" \
+             '.[0].versions[0].checksum = $checksum | 
+              .[0].versions[0].timestamp = $timestamp |
+              .[0].versions[0].sourceUrl = $sourceUrl |
+              .[0].versions[0].version = "1.0.0-dev-'" + $COMMIT_SHA + '"' \
+             manifest.json > manifest_updated.json && mv manifest_updated.json manifest.json
+
+      - name: Commit updated manifest
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add manifest.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update manifest with checksum for commit ${GITHUB_SHA:0:7}"
+            git push
+          fi
