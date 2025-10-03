@@ -20,12 +20,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.BulsatcomChannel
 {
-    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
+    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IDisposable
     {
         public override string Name => "Bulsatcom File Generator";
         public override Guid Id => Guid.Parse("f996e2e1-3335-4b39-adf2-417d38b18b6d");
 
         public static Plugin? Instance { get; private set; }
+        private bool _disposed = false;
 
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
             : base(applicationPaths, xmlSerializer)
@@ -39,17 +40,37 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             {
                 new PluginPageInfo
                 {
-                    Name = "Bulsatcom Settings",
-                    EmbeddedResourcePath = "Jellyfin.Plugin.BulsatcomChannel.Configuration.config.html"
+                    Name = "Configuration",
+                    EmbeddedResourcePath = "Jellyfin.Plugin.BulsatcomChannel.Configuration.simple-config.html"
                 }
             };
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Clean up managed resources
+                    Instance = null;
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 
-    public class BulsatcomScheduledTask : IScheduledTask
+    public class BulsatcomScheduledTask : IScheduledTask, IDisposable
     {
         private readonly ILogger<BulsatcomScheduledTask> _logger;
         private readonly HttpClient _httpClient;
+        private bool _disposed = false;
 
         public BulsatcomScheduledTask(ILogger<BulsatcomScheduledTask> logger)
         {
@@ -397,6 +418,24 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 }
             };
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _httpClient?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 
     // Classes for JSON deserialization
@@ -438,4 +477,6 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         [JsonPropertyName("description")]
         public string? Description { get; set; }
     }
+
+
 }

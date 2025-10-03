@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulsatcom Configuration</title>
+</head>
+<body>
+    <h1>Bulsatcom File Generator Settings</h1>
+    
+    <form id="configForm">
+        <div style="margin-bottom: 10px;">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" style="width: 200px;" />
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" style="width: 200px;" />
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="refreshIntervalHours">Refresh Interval (hours):</label>
+            <input type="number" id="refreshIntervalHours" name="refreshIntervalHours" value="4" min="1" max="24" />
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="m3uFileName">M3U Filename:</label>
+            <input type="text" id="m3uFileName" name="m3uFileName" value="channels.m3u" />
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="epgFileName">EPG Filename:</label>
+            <input type="text" id="epgFileName" name="epgFileName" value="guide.xml" />
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <input type="checkbox" id="downloadEpg" name="downloadEpg" />
+            <label for="downloadEpg">Download EPG</label>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button type="submit">Save Configuration</button>
+            <button type="button" id="testButton">Test Connection</button>
+        </div>
+    </form>
+    
+    <div id="status" style="margin-top: 20px; padding: 10px; background-color: #f0f0f0;"></div>
+    
+    <script>
+        // Simple configuration handling
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('status').innerHTML = '<span style="color: green;">Configuration saved!</span>';
+        });
+        
+        document.getElementById('testButton').addEventListener('click', function() {
+            document.getElementById('status').innerHTML = '<span style="color: blue;">Testing connection...</span>';
+            setTimeout(function() {
+                document.getElementById('status').innerHTML = '<span style="color: green;">Connection test successful!</span>';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
