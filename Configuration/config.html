@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulsatcom Configuration</title>
+</head>
+<body>
+    <form>
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" />
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" />
+        </div>
+        <div>
+            <label for="apiUrl">API URL:</label>
+            <input type="text" id="apiUrl" name="apiUrl" />
+        </div>
+        <div>
+            <label for="timeout">Timeout (seconds):</label>
+            <input type="number" id="timeout" name="timeout" />
+        </div>
+        <div>
+            <label for="osType">OS Type:</label>
+            <select id="osType" name="osType">
+                <option value="1">Samsung TV</option>
+                <option value="0">PC Web</option>
+            </select>
+        </div>
+        <div>
+            <input type="checkbox" id="downloadEpg" name="downloadEpg" />
+            <label for="downloadEpg">Download EPG</label>
+        </div>
+        <div>
+            <input type="checkbox" id="debug" name="debug" />
+            <label for="debug">Enable Debugging</label>
+        </div>
+        <div>
+            <label for="blockedGenres">Blocked Genres (comma-separated):</label>
+            <input type="text" id="blockedGenres" name="blockedGenres" />
+        </div>
+        <br />
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>

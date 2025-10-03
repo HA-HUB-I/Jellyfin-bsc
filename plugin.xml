@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Plugin>
+  <Name>Bulsatcom</Name>
+  <Version>1.0.0.0</Version>
+  <Id>f996e2e1-3335-4b39-adf2-417d38b18b6d</Id>
+  <Description>Downloads M3U and EPG from Bulsatcom's IPTV service.</Description>
+  <Author>YourName</Author>
+  <AuthorUrl>https://github.com/your-repo</AuthorUrl>
+  <Image>https://raw.githubusercontent.com/jellyfin/jellyfin-plugin-template/master/res/icon.png</Image>
+</Plugin>

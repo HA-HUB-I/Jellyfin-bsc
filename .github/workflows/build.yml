@@ -1,0 +1,60 @@
+name: Build and Release Jellyfin Plugin
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build plugin
+        run: dotnet build --configuration Release
+
+      - name: Prepare package
+        run: |
+          PLUGIN_DIR="Jellyfin.Plugin.BulsatcomChannel"
+          mkdir -p "dist/${PLUGIN_DIR}"
+          cp "bin/Release/net8.0/${PLUGIN_DIR}.dll" "dist/${PLUGIN_DIR}/"
+          cp plugin.xml "dist/${PLUGIN_DIR}/"
+
+      - name: Create zip archive
+        run: |
+          cd dist
+          zip -r ../plugin.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jellyfin-plugin
+          path: plugin.zip
+
+      - name: Create GitHub Release
+        id: create_release
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: plugin.zip
+          fail_on_unmatched_files: true
+          tag_name: ${{ github.ref_name || 'manual-build' }}
+          name: ${{ github.ref_name || 'Manual Build' }}
