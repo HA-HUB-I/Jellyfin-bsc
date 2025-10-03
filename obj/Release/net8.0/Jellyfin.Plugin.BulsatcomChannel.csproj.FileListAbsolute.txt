@@ -1,0 +1,13 @@
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.csproj.AssemblyReference.cache
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.GeneratedMSBuildEditorConfig.editorconfig
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.AssemblyInfoInputs.cache
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.AssemblyInfo.cs
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.csproj.CoreCompileInputs.cache
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.sourcelink.json
+D:\WP_GIT\Jellyfin-bsc\bin\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.deps.json
+D:\WP_GIT\Jellyfin-bsc\bin\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.dll
+D:\WP_GIT\Jellyfin-bsc\bin\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.pdb
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.dll
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\refint\Jellyfin.Plugin.BulsatcomChannel.dll
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\Jellyfin.Plugin.BulsatcomChannel.pdb
+D:\WP_GIT\Jellyfin-bsc\obj\Release\net8.0\ref\Jellyfin.Plugin.BulsatcomChannel.dll

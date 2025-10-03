@@ -6,10 +6,15 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Jellyfin.Plugin.BulsatcomChannel.Configuration;
+using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Serialization;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -20,10 +25,10 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         public override string Name => "Bulsatcom File Generator";
         public override Guid Id => Guid.Parse("f996e2e1-3335-4b39-adf2-417d38b18b6d");
 
-        public static Plugin Instance { get; private set; }
+        public static Plugin? Instance { get; private set; }
 
-        public Plugin(ILogger<Plugin> logger)
-            : base(logger)
+        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
+            : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
         }
@@ -55,10 +60,11 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         public string Name => "Generate Bulsatcom Files";
         public string Description => "Generates M3U and EPG files from Bulsatcom.";
         public string Category => "Live TV";
+        public string Key => "BulsatcomFileGeneration";
         public bool IsHidden => false;
         public bool IsEnabled => true;
 
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
+        public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting Bulsatcom file generation.");
 
@@ -146,7 +152,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 return session;
             }
 
-            return m3u.ToString();
+            return session ?? string.Empty;
         }
 
         private async Task GetEpg(List<BulsatcomChannel> channels, string apiUrl, CancellationToken cancellationToken)
@@ -221,29 +227,39 @@ namespace Jellyfin.Plugin.BulsatcomChannel
     public class BulsatcomChannel
     {
         [JsonPropertyName("epg_name")]
-        public string EpgName { get; set; }
+        public string? EpgName { get; set; }
 
         [JsonPropertyName("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [JsonPropertyName("sources")]
-        public string Sources { get; set; }
+        public string? Sources { get; set; }
 
         [JsonPropertyName("radio")]
-        public string Radio { get; set; }
+        public string? Radio { get; set; }
 
         [JsonPropertyName("genre")]
-        public string Genre { get; set; }
+        public string? Genre { get; set; }
 
         [JsonPropertyName("channel")]
-        public string ChannelId { get; set; }
+        public string? ChannelId { get; set; }
 
         [JsonPropertyName("program")]
-        public BulsatcomProgram Program { get; set; }
+        public BulsatcomProgram? Program { get; set; }
     }
 
     public class BulsatcomProgram
     {
-        // TODO: Define program properties based on EPG JSON structure
+        [JsonPropertyName("title")]
+        public string? Title { get; set; }
+
+        [JsonPropertyName("start")]
+        public string? Start { get; set; }
+
+        [JsonPropertyName("stop")]
+        public string? Stop { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
     }
 }
