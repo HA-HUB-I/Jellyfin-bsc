@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.BulsatcomChannel.Configuration;
@@ -106,23 +108,95 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
                 // Create output directory
                 var dataPath = Plugin.Instance.DataFolderPath;
+                _logger.LogInformation($"Files will be saved to: {dataPath}");
+                
                 if (!Directory.Exists(dataPath))
                 {
                     Directory.CreateDirectory(dataPath);
                     _logger.LogInformation($"Created data directory: {dataPath}");
                 }
 
-                progress?.Report(50);
+                progress?.Report(40);
 
-                // Generate basic M3U file
-                var m3uPath = Path.Combine(dataPath, config.M3uFileName);
-                var basicM3u = "#EXTM3U\n#EXTINF:-1,Test Channel\nhttp://example.com/stream\n";
+                // Authenticate with Bulsatcom API
+                _logger.LogInformation($"Authenticating with Bulsatcom API for user: {config.Username}");
                 
-                await File.WriteAllTextAsync(m3uPath, basicM3u, cancellationToken);
-                _logger.LogInformation($"Generated basic M3U file: {m3uPath}");
+                var apiClient = new BulsatcomApiClient(_logger);
+                string session;
+                
+                try
+                {
+                    session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    _logger.LogError($"Authentication failed for user: {config.Username}. Please check your credentials.");
+                    throw;
+                }
+
+                progress?.Report(60);
+
+                // Get channels list
+                var channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken);
+                
+                if (channels == null || channels.Count == 0)
+                {
+                    _logger.LogWarning("No channels retrieved from Bulsatcom API");
+                    return;
+                }
+
+                _logger.LogInformation($"Retrieved {channels.Count} channels from Bulsatcom");
+
+                progress?.Report(75);
+
+                // Generate M3U file
+                var m3uPath = Path.Combine(dataPath, config.M3uFileName);
+                var m3uContent = new StringBuilder("#EXTM3U\n");
+                
+                foreach (var channel in channels)
+                {
+                    if (!string.IsNullOrWhiteSpace(config.BlockedGenres) && 
+                        config.BlockedGenres.Split(',').Any(g => g.Trim() == channel.Genre))
+                    {
+                        continue;
+                    }
+                    
+                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{channel.Radio}\" group-title=\"{channel.Genre}\" tvg-logo=\"{channel.EpgName}.png\" tvg-id=\"{channel.EpgName}\",{channel.Title}");
+                    m3uContent.AppendLine(channel.Sources);
+                }
+                
+                await File.WriteAllTextAsync(m3uPath, m3uContent.ToString(), cancellationToken);
+                _logger.LogInformation($"Successfully generated M3U file with {channels.Count} channels: {m3uPath}");
+                
+                progress?.Report(90);
+
+                // Generate basic EPG file (full EPG implementation can be added later)
+                if (config.DownloadEpg)
+                {
+                    var epgPath = Path.Combine(dataPath, config.EpgFileName);
+                    var basicEpg = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<tv>\n";
+                    
+                    foreach (var channel in channels)
+                    {
+                        if (!string.IsNullOrWhiteSpace(config.BlockedGenres) && 
+                            config.BlockedGenres.Split(',').Any(g => g.Trim() == channel.Genre))
+                        {
+                            continue;
+                        }
+                        
+                        basicEpg += $"  <channel id=\"{channel.EpgName}\">\n";
+                        basicEpg += $"    <display-name>{channel.Title}</display-name>\n";
+                        basicEpg += $"  </channel>\n";
+                    }
+                    
+                    basicEpg += "</tv>\n";
+                    
+                    await File.WriteAllTextAsync(epgPath, basicEpg, cancellationToken);
+                    _logger.LogInformation($"Successfully generated EPG file: {epgPath}");
+                }
 
                 progress?.Report(100);
-                _logger.LogInformation("Bulsatcom file generation completed successfully");
+                _logger.LogInformation($"Bulsatcom file generation completed successfully. Files saved to: {dataPath}");
             }
             catch (Exception ex)
             {

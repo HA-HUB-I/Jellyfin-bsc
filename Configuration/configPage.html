@@ -61,6 +61,23 @@
                     <div class="fieldDescription">How often to update files (1-168 hours)</div>
                 </div>
 
+                <div class="verticalSection">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">File Storage Information</h2>
+                    </div>
+                </div>
+
+                <div class="fieldDescription" style="padding: 1em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                    <strong>Generated files location:</strong><br/>
+                    <span style="font-family: monospace; font-size: 0.9em;">
+                        Windows: C:\ProgramData\Jellyfin\Server\data\plugins\configurations\Jellyfin.Plugin.BulsatcomChannel\<br/>
+                        Linux: /var/lib/jellyfin/data/plugins/configurations/Jellyfin.Plugin.BulsatcomChannel/<br/>
+                        Docker: /config/data/plugins/configurations/Jellyfin.Plugin.BulsatcomChannel/
+                    </span>
+                    <br/><br/>
+                    <em>Check the Jellyfin logs for the exact path and any authentication errors.</em>
+                </div>
+
                 <br/>
                 <div>
                     <button is="emby-button" type="submit" class="raised button-submit block emby-button">
