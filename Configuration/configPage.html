@@ -1,0 +1,75 @@
+<div id="BulsatcomConfigPage"
+     data-role="page"
+     data-title="Bulsatcom Channel"
+     class="page type-interior withTabs pluginConfigurationPage BulsatcomConfigPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-helpurl="https://github.com/yourusername/Jellyfin-bsc"
+     data-controller="__plugin/BulsatcomConfigPageJs">
+
+    <div data-role="content">
+        <div class="content-primary">
+
+            <form id="BulsatcomConfigForm" class="BulsatcomConfigForm">
+
+                <div class="verticalSection">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Bulsatcom Account Settings</h2>
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="Username">Username</label>
+                    <input is="emby-input" type="text" id="Username" name="Username" class="emby-input"/>
+                    <div class="fieldDescription">Your Bulsatcom account username</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="Password">Password</label>
+                    <input is="emby-input" type="password" id="Password" name="Password" class="emby-input"/>
+                    <div class="fieldDescription">Your Bulsatcom account password</div>
+                </div>
+
+                <div class="verticalSection">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">File Generation Settings</h2>
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="M3uFileName">M3U File Name</label>
+                    <input is="emby-input" type="text" id="M3uFileName" name="M3uFileName" class="emby-input"/>
+                    <div class="fieldDescription">Name for the generated M3U playlist file</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="EpgFileName">EPG File Name</label>
+                    <input is="emby-input" type="text" id="EpgFileName" name="EpgFileName" class="emby-input"/>
+                    <div class="fieldDescription">Name for the generated EPG XML file</div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="EnableScheduledTask" />
+                        <span>Enable Automatic File Generation</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">Automatically generate files every 6 hours</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="UpdateIntervalHours">Update Interval (Hours)</label>
+                    <input is="emby-input" type="number" id="UpdateIntervalHours" name="UpdateIntervalHours" min="1" max="168" class="emby-input"/>
+                    <div class="fieldDescription">How often to update files (1-168 hours)</div>
+                </div>
+
+                <br/>
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>

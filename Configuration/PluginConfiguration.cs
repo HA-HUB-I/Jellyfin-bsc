@@ -31,5 +31,9 @@ namespace Jellyfin.Plugin.BulsatcomChannel.Configuration
         public string LastError { get; set; } = "";
         public DateTime LastSuccessfulUpdate { get; set; } = DateTime.MinValue;
         public int TotalChannels { get; set; } = 0;
+        
+        // Scheduled task settings
+        public bool EnableScheduledTask { get; set; } = true;
+        public int UpdateIntervalHours { get; set; } = 6;
     }
 }

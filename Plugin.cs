@@ -45,8 +45,17 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             {
                 new PluginPageInfo
                 {
-                    Name = "Configuration",
-                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.minimal-config.html"
+                    DisplayName = "Bulsatcom Channel",
+                    Name = "BulsatcomConfigPage",
+                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.html",
+                    EnableInMainMenu = true,
+                    MenuSection = "server",
+                    MenuIcon = "live_tv"
+                },
+                new PluginPageInfo
+                {
+                    Name = "BulsatcomConfigPageJs",
+                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.js"
                 }
             };
         }
