@@ -6,10 +6,14 @@ on:
       - 'v*.*.*'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Version number (e.g., 1.0.1)'
+        required: true
+        default: '1.0.1'
       create_release:
         description: 'Create GitHub Release'
         required: false
-        default: false
+        default: true
         type: boolean
 
 jobs:
@@ -22,11 +26,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" =~ ^refs/tags/v ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Building tag release: v$VERSION"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Building manual release: v$VERSION"
+          fi
 
       - name: Restore dependencies
         run: dotnet restore
@@ -50,17 +69,21 @@ jobs:
         id: checksum
         run: |
           MD5_HASH=$(md5sum plugin.zip | cut -d ' ' -f 1)
-          echo "md5=$MD5_HASH" >> $GITHUB_OUTPUT
-          echo "MD5 checksum: $MD5_HASH"
+          echo "md5=${MD5_HASH^^}" >> $GITHUB_OUTPUT
+          echo "MD5 checksum: ${MD5_HASH^^}"
 
-      - name: Update manifest with checksum
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Update manifest
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION="${{ steps.version.outputs.version }}"
           MD5_HASH="${{ steps.checksum.outputs.md5 }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
-          # Update manifest.json with the actual checksum, version and timestamp
+          echo "Updating manifest with:"
+          echo "  Version: $VERSION"
+          echo "  Checksum: $MD5_HASH"
+          echo "  Timestamp: $TIMESTAMP"
+          
+          # Update manifest.json
           jq --arg version "$VERSION" \
              --arg checksum "$MD5_HASH" \
              --arg timestamp "$TIMESTAMP" \
@@ -70,9 +93,53 @@ jobs:
               .[0].versions[0].timestamp = $timestamp |
               .[0].versions[0].sourceUrl = $sourceUrl' \
              manifest.json > manifest_updated.json && mv manifest_updated.json manifest.json
+          
+          echo "Updated manifest.json:"
+          cat manifest.json
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jellyfin-plugin-v${{ steps.version.outputs.version }}
+          path: |
+            plugin.zip
+            manifest.json
+
+      - name: Create/Update Release
+        if: github.event.inputs.create_release == 'true' || startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "Jellyfin Bulsatcom Plugin v${{ steps.version.outputs.version }}"
+          body: |
+            ## Jellyfin Bulsatcom File Generator Plugin v${{ steps.version.outputs.version }}
+            
+            ### Installation Instructions
+            
+            1. **Via Plugin Repository (Recommended):**
+               - Add repository URL: `https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/main/manifest.json`
+               - Install from Jellyfin Plugin Catalog
+            
+            2. **Manual Installation:**
+               - Download `plugin.zip` from this release
+               - Extract to your Jellyfin plugins directory
+               - Restart Jellyfin
+            
+            ### Configuration
+            - Go to Plugins → Bulsatcom File Generator → Settings
+            - Enter your Bulsatcom credentials
+            - Configure refresh intervals and file settings
+            
+            ### Files Generated
+            - M3U Playlist: `bulsat.m3u`
+            - EPG XML: `bulsat.xml` 
+            
+            **MD5 Checksum:** `${{ steps.checksum.outputs.md5 }}`
+          files: plugin.zip
+          draft: false
+          prerelease: false
 
       - name: Commit updated manifest
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -80,42 +147,5 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update manifest with checksum for ${{ github.ref_name }}"
-            git push origin HEAD:main
-          fi
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jellyfin-plugin
-          path: plugin.zip
-
-      - name: Create GitHub Release (Tag Release)
-        id: create_tag_release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: plugin.zip
-          fail_on_unmatched_files: true
-          generate_release_notes: true
-          
-      - name: Generate unique tag for manual release
-        id: manual_tag
-        if: github.event.inputs.create_release == 'true' && !startsWith(github.ref, 'refs/tags/')
-        run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          TAG_NAME="manual-$TIMESTAMP"
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "Generated tag: $TAG_NAME"
-
-      - name: Create GitHub Release (Manual)
-        id: create_manual_release
-        if: github.event.inputs.create_release == 'true' && !startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: plugin.zip
-          fail_on_unmatched_files: true
-          tag_name: ${{ steps.manual_tag.outputs.tag_name }}
-          name: "Manual Build - ${{ steps.manual_tag.outputs.tag_name }}"
-          body: "Manual build from commit ${{ github.sha }}"
-          prerelease: true
+            git commit -m "🔄 Update manifest for v${{ steps.version.outputs.version }} - checksum: ${{ steps.checksum.outputs.md5 }}"
+            git push
