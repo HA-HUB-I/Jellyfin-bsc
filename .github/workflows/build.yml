@@ -144,8 +144,11 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add manifest.json
+
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "🔄 Update manifest for v${{ steps.version.outputs.version }} - checksum: ${{ steps.checksum.outputs.md5 }}"
             git push
+          fi
+
