@@ -47,14 +47,17 @@
           "targetAlias": "net8.0",
           "dependencies": {
             "Jellyfin.Controller": {
+              "include": "Compile",
               "target": "Package",
-              "version": "[10.9.11, )"
+              "version": "[10.9.*-*, )"
             },
             "Jellyfin.Model": {
+              "include": "Compile",
               "target": "Package",
-              "version": "[10.9.11, )"
+              "version": "[10.9.*-*, )"
             },
             "Microsoft.Extensions.Http": {
+              "include": "Compile",
               "target": "Package",
               "version": "[8.0.0, )"
             }

@@ -45,8 +45,8 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             {
                 new PluginPageInfo
                 {
-                    Name = "Settings",
-                    EmbeddedResourcePath = "Jellyfin.Plugin.BulsatcomChannel.Configuration.basic-config.html"
+                    Name = "Configuration",
+                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.minimal-config.html"
                 }
             };
         }

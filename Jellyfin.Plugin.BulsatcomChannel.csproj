@@ -2,20 +2,28 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <RootNamespace>Jellyfin.Plugin.BulsatcomChannel</RootNamespace>
+    <AssemblyName>Jellyfin.Plugin.BulsatcomChannel</AssemblyName>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyVersion>1.0.6.0</AssemblyVersion>
+    <FileVersion>1.0.6.0</FileVersion>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>1.0.5.0</AssemblyVersion>
-    <FileVersion>1.0.5.0</FileVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="10.9.11" />
-    <PackageReference Include="Jellyfin.Model" Version="10.9.11" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.9.*-*" IncludeAssets="compile" />
+    <PackageReference Include="Jellyfin.Model" Version="10.9.*-*" IncludeAssets="compile" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" IncludeAssets="compile" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Configuration\basic-config.html" />
+    <None Remove="Configuration\*.html" />
+    <None Remove="Configuration\*.js" />
+    <EmbeddedResource Include="Configuration\*.html" />
+    <EmbeddedResource Include="Configuration\*.js" />
   </ItemGroup>
 
 </Project>
