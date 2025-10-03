@@ -11,7 +11,7 @@
       "changelog": "Implemented real Bulsatcom API integration! Now generates actual M3U playlists with real channels from your account. Added AES encryption for authentication, full channel listing with genres, logos, and EPG data. Supports content filtering by blocked genres.",
       "targetAbi": "10.9.0.0",
       "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.1.0/plugin.zip",
-      "checksum": "31E42F0593F74951A85C93958DA820A2",
+      "checksum": "D86431384164C6231CC1E5790AA369FF",
       "timestamp": "2025-10-03T18:44:07Z"
     }
   ]
