@@ -11,8 +11,8 @@
         "version": "1.0.1",
         "changelog": "Initial release.",
         "targetAbi": "10.9.0.0",
-        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/blob/main/downloaded_plugin.zip",
-        "checksum": "8102C8212A1137323293E5DD27359A77",
+        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/raw/refs/heads/main/downloaded_plugin.zip",
+        "checksum": "C87D1A7F040ADD96098A89ABECF19589",
         "timestamp": "2025-10-03T15:44:54Z"
       }
     ]
