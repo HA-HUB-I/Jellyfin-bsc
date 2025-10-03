@@ -196,7 +196,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         public string? Sources { get; set; }
         
         [JsonPropertyName("radio")]
-        public string? Radio { get; set; }
+        public bool Radio { get; set; }
         
         [JsonPropertyName("genre")]
         public string? Genre { get; set; }

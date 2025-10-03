@@ -161,7 +161,8 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                         continue;
                     }
                     
-                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{channel.Radio}\" group-title=\"{channel.Genre}\" tvg-logo=\"{channel.EpgName}.png\" tvg-id=\"{channel.EpgName}\",{channel.Title}");
+                    var radioValue = channel.Radio ? "true" : "false";
+                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{radioValue}\" group-title=\"{channel.Genre}\" tvg-logo=\"{channel.EpgName}.png\" tvg-id=\"{channel.EpgName}\",{channel.Title}");
                     m3uContent.AppendLine(channel.Sources);
                 }
                 
