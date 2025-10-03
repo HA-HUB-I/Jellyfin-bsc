@@ -1,3 +1,21 @@
-/sample-manifest.json
-fix.md
+# Build artifacts
+bin/
+obj/
+dist/
 plugin.zip
+
+# Temporary files
+fix.md
+*.tmp
+*.log
+
+# IDE files
+.vs/
+.vscode/
+
+# Sample files
+/sample-manifest.json
+
+# OS files
+.DS_Store
+Thumbs.db
