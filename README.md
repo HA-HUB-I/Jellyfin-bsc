@@ -77,18 +77,19 @@ The plugin thumbnail should display automatically in the catalog. If not:
 3. Wait a few minutes for GitHub CDN to update
 
 ### Playback Error after M3U refresh
-**✅ FIXED in v1.1.3+** - The plugin now automatically triggers "Refresh Guide" after generating new files.
+**How it works:** Bulsatcom tokens/URLs expire after a period, and when the plugin generates new files, Jellyfin needs to reload them.
 
-If you're on an older version and see errors like:
+If you see errors like:
 ```
 [ERR] Error processing request. URL "POST" "/Items/.../PlaybackInfo"
 ```
 
-This happens because Bulsatcom tokens/URLs expire and Jellyfin caches the old playlist. 
+**Solutions:**
+1. ✅ **Set automatic refresh interval** in Live TV settings (Dashboard → Live TV → Tuner Devices → M3U Tuner → Refresh Interval)
+2. **Manual refresh:** Dashboard → Scheduled Tasks → Refresh Guide (Run Now)
+3. Check plugin logs after scheduled task runs - you'll see a message reminding you to refresh
 
-**Solution:**
-1. **Upgrade to v1.1.3** - Auto-refresh is built-in
-2. Or manually run: **Dashboard → Scheduled Tasks → Refresh Guide**
+**Note:** Jellyfin automatically refreshes the guide based on your configured interval. The plugin logs will notify you when new files are generated.
 
 ### Files not generating
 1. Check your Bulsatcom credentials in plugin settings

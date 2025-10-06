@@ -95,12 +95,10 @@ namespace Jellyfin.Plugin.BulsatcomChannel
     public class BulsatcomScheduledTask : IScheduledTask
     {
         private readonly ILogger<BulsatcomScheduledTask> _logger;
-        private readonly ITaskManager _taskManager;
 
-        public BulsatcomScheduledTask(ILogger<BulsatcomScheduledTask> logger, ITaskManager taskManager)
+        public BulsatcomScheduledTask(ILogger<BulsatcomScheduledTask> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _taskManager = taskManager ?? throw new ArgumentNullException(nameof(taskManager));
         }
 
         public string Name => "Generate Bulsatcom Files";
@@ -227,51 +225,14 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 progress?.Report(100);
                 _logger.LogInformation($"Bulsatcom file generation completed successfully. Files saved to: {dataPath}");
 
-                // Force Jellyfin to refresh Live TV Guide
-                await RefreshLiveTvGuideAsync(cancellationToken);
+                // Notify about Live TV Guide refresh
+                _logger.LogWarning("IMPORTANT: M3U/EPG files have been updated with new Bulsatcom tokens.");
+                _logger.LogWarning("The Live TV Guide will automatically refresh within a few minutes, or you can manually trigger it from Dashboard → Scheduled Tasks → Refresh Guide");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during Bulsatcom file generation");
                 throw;
-            }
-        }
-
-        /// <summary>
-        /// Triggers Jellyfin to refresh the Live TV Guide after updating M3U/EPG files
-        /// </summary>
-        private async Task RefreshLiveTvGuideAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                _logger.LogInformation("Triggering Live TV Guide refresh...");
-
-                // Find the "Refresh Guide" scheduled task
-                var refreshGuideTask = _taskManager.ScheduledTasks
-                    .FirstOrDefault(t => t.Name.Contains("Refresh Guide", StringComparison.OrdinalIgnoreCase) || 
-                                        t.ScheduledTask.Key.Contains("RefreshGuide", StringComparison.OrdinalIgnoreCase));
-
-                if (refreshGuideTask != null)
-                {
-                    _logger.LogInformation($"Found refresh task: {refreshGuideTask.Name}");
-                    
-                    // Execute the refresh task
-                    await _taskManager.Execute(refreshGuideTask, new TaskOptions());
-                    
-                    _logger.LogInformation("Live TV Guide refresh triggered successfully");
-                }
-                else
-                {
-                    _logger.LogWarning("Could not find 'Refresh Guide' scheduled task. Available tasks:");
-                    foreach (var task in _taskManager.ScheduledTasks)
-                    {
-                        _logger.LogDebug($"  - {task.Name}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to trigger Live TV Guide refresh. You may need to manually refresh the guide.");
             }
         }
 
