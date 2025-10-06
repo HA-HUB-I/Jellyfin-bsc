@@ -47,6 +47,40 @@ This plugin runs as a scheduled task within Jellyfin. It logs into the Bulsatcom
    - **M3U Tuner:** Point to the generated `.m3u` file path
    - **XMLTV EPG:** Point to the generated `.xml` file path
 
+## Uninstalling / Disabling
+
+### To Disable the Plugin:
+1. Go to **Dashboard → Plugins**
+2. Find "Bulsatcom File Generator"
+3. Toggle the switch to **Disable**
+4. Restart Jellyfin
+
+### To Completely Remove:
+1. Go to **Dashboard → Plugins**
+2. Find "Bulsatcom File Generator"
+3. Click the **Delete** button (trash icon)
+4. Restart Jellyfin
+5. **Important:** Manually delete the plugin data folder if needed:
+   - Linux: `/var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/`
+   - Windows: `%AppData%\Jellyfin\plugins\Jellyfin.Plugin.BulsatcomChannel\`
+   - Docker: `/config/plugins/Jellyfin.Plugin.BulsatcomChannel/`
+
+## Troubleshooting
+
+### Plugin shows version 0.0.0.0
+This was a bug in earlier versions. Update to **v1.1.2** or later. The version is now correctly embedded in the DLL.
+
+### Thumbnail image not showing
+The plugin thumbnail should display automatically in the catalog. If not:
+1. Clear your browser cache
+2. Check that the repository URL is correct
+3. Wait a few minutes for GitHub CDN to update
+
+### Files not generating
+1. Check your Bulsatcom credentials in plugin settings
+2. Run the scheduled task manually from **Dashboard → Scheduled Tasks**
+3. Check Jellyfin logs for errors
+
 ## Development
 
 ### MD5 Checksum Generation

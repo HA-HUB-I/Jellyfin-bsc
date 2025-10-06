@@ -19,18 +19,44 @@ namespace Jellyfin.Plugin.BulsatcomChannel
     /// <summary>
     /// Minimal Bulsatcom plugin for Jellyfin - focused on stability
     /// </summary>
-    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
+    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IDisposable
     {
         public override string Name => "Bulsatcom File Generator";
         public override Guid Id => Guid.Parse("f996e2e1-3335-4b39-adf2-417d38b18b6d");
         public override string Description => "Generates M3U and EPG files from Bulsatcom IPTV service";
 
         public static Plugin? Instance { get; private set; }
+        private bool _disposed = false;
 
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
+        }
+
+        /// <summary>
+        /// Cleanup resources when plugin is uninstalled or disabled
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Clean up managed resources
+                    Instance = null;
+                }
+                _disposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Public dispose method for IDisposable
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

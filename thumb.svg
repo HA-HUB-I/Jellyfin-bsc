@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <!-- Background -->
+  <rect width="300" height="300" fill="#1a1a2e" rx="20"/>
+  
+  <!-- Gradient -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e94560;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f3460;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circle -->
+  <circle cx="150" cy="130" r="80" fill="url(#grad1)"/>
+  
+  <!-- TV antenna icon -->
+  <path d="M 130 90 L 150 50 L 170 90 Z" fill="#fff" stroke="#fff" stroke-width="3"/>
+  <line x1="150" y1="50" x2="150" y2="30" stroke="#fff" stroke-width="4"/>
+  <circle cx="150" cy="25" r="5" fill="#fff"/>
+  
+  <!-- TV screen -->
+  <rect x="120" y="110" width="60" height="45" rx="5" fill="#fff"/>
+  <rect x="125" y="115" width="50" height="35" fill="#e94560"/>
+  
+  <!-- Signal waves -->
+  <path d="M 100 120 Q 90 130 100 140" fill="none" stroke="#fff" stroke-width="2" opacity="0.7"/>
+  <path d="M 200 120 Q 210 130 200 140" fill="none" stroke="#fff" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Text -->
+  <text x="150" y="220" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#fff" text-anchor="middle">BULSATCOM</text>
+  <text x="150" y="245" font-family="Arial, sans-serif" font-size="14" fill="#16213e" text-anchor="middle">IPTV Generator</text>
+</svg>

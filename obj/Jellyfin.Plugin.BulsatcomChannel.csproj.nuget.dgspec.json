@@ -5,7 +5,7 @@
   },
   "projects": {
     "D:\\WP_GIT\\Jellyfin-bsc\\Jellyfin.Plugin.BulsatcomChannel.csproj": {
-      "version": "1.0.0",
+      "version": "1.1.2",
       "restore": {
         "projectUniqueName": "D:\\WP_GIT\\Jellyfin-bsc\\Jellyfin.Plugin.BulsatcomChannel.csproj",
         "projectName": "Jellyfin.Plugin.BulsatcomChannel",

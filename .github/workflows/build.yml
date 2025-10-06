@@ -117,8 +117,9 @@ jobs:
             ### Installation Instructions
             
             1. **Via Plugin Repository (Recommended):**
-               - Add repository URL: `https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/main/manifest.json`
+               - Add repository URL: `https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/master/manifest.json`
                - Install from Jellyfin Plugin Catalog
+               - Restart Jellyfin
             
             2. **Manual Installation:**
                - Download `plugin.zip` from this release
