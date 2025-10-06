@@ -5,7 +5,7 @@
     "name": "Bulsatcom File Generator",
     "description": "Generates M3U and EPG files from Bulsatcom IPTV service with comprehensive configuration options.",
     "owner": "HA-HUB-I",
-    "imageUrl": "https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/main/thumb.png",
+    "imageUrl": "https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/master/thumb.png",
     "overview": "This plugin automatically generates M3U playlist and XMLTV EPG files from Bulsatcom IPTV service. Features include credential validation, configurable refresh intervals, content filtering, error handling, and a modern configuration interface.",
     "versions": [
       {

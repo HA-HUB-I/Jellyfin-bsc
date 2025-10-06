@@ -14,7 +14,7 @@ This plugin runs as a scheduled task within Jellyfin. It logs into the Bulsatcom
 2. Go to **Plugins → Repositories → Add Repository**
 3. Enter:
    - **Repository Name:** `Bulsatcom Plugin`
-   - **Repository URL:** `https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/main/manifest.json`
+   - **Repository URL:** `https://raw.githubusercontent.com/HA-HUB-I/Jellyfin-bsc/master/manifest.json`
 4. Save and go to **Plugins → Catalog**
 5. Find "Bulsatcom File Generator" and install it
 6. Restart Jellyfin
