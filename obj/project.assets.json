@@ -1821,7 +1821,7 @@
     "C:\\Users\\VUEDeveloper1\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.1.2",
+    "version": "1.1.3",
     "restore": {
       "projectUniqueName": "D:\\WP_GIT\\Jellyfin-bsc\\Jellyfin.Plugin.BulsatcomChannel.csproj",
       "projectName": "Jellyfin.Plugin.BulsatcomChannel",
