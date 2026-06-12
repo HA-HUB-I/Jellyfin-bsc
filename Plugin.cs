@@ -250,9 +250,9 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
                 progress?.Report(60);
 
-                // Read port and construct dynamic stream base URL
-                var port = _configManager.Configuration.HttpServerPortNumber;
-                var baseUrl = $"http://127.0.0.1:{port}";
+                // Construct local stream base URL using Jellyfin's default HTTP port (8096).
+                // HttpServerPortNumber was removed from ServerConfiguration in Jellyfin 10.9.
+                var baseUrl = "http://127.0.0.1:8096";
 
                 // Generate M3U file
                 var m3uPath = Path.Combine(dataPath, config.M3uFileName);
@@ -470,7 +470,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 // Trigger Refresh Guide task in Jellyfin programmatically
                 try
                 {
-                    var refreshTask = _taskManager.ScheduledTasks.FirstOrDefault(t => t.Key == "RefreshGuide" || t.Name == "Refresh Guide");
+                    var refreshTask = _taskManager.ScheduledTasks.FirstOrDefault(t => t.Name == "Refresh Guide");
                     if (refreshTask != null)
                     {
                         _logger.LogInformation("Triggering Jellyfin 'Refresh Guide' scheduled task...");
