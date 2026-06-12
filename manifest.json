@@ -9,10 +9,10 @@
     "overview": "This plugin automatically generates M3U playlist and XMLTV EPG files from Bulsatcom IPTV service. Features include credential validation, configurable refresh intervals, content filtering, error handling, and a modern configuration interface.",
     "versions": [
       {
-        "version": "1.1.4.0",
-        "changelog": "Fixed MissingMethodException with ITaskManager. Plugin now logs clear instructions to manually refresh Live TV Guide after M3U/EPG updates. Jellyfin will auto-refresh guide periodically based on your refresh interval settings.",
+        "version": "1.1.5.0",
+        "changelog": "Added local stream redirects to prevent token expiration, thread-safe session caching, and full Bulgarian XMLTV EPG downloading and mapping.",
         "targetAbi": "10.9.0.0",
-        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.1.4.0/plugin.zip",
+        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.1.5.0/plugin.zip",
         "checksum": "6DE730CA266027EAC8D05BE54E55FEC7",
         "timestamp": "2025-10-06T18:48:24Z"
       }

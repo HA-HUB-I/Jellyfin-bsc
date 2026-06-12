@@ -200,5 +200,17 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         
         [JsonPropertyName("genre")]
         public string? Genre { get; set; }
+
+        [JsonPropertyName("program")]
+        public string? Program { get; set; }
+
+        [JsonPropertyName("desc")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("start")]
+        public string? Start { get; set; }
+
+        [JsonPropertyName("stop")]
+        public string? Stop { get; set; }
     }
 }
