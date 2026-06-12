@@ -7,17 +7,17 @@
     <AssemblyName>Jellyfin.Plugin.BulsatcomChannel</AssemblyName>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <AssemblyVersion>1.1.5.0</AssemblyVersion>
-    <FileVersion>1.1.5.0</FileVersion>
-    <Version>1.1.5</Version>
-    <InformationalVersion>1.1.5</InformationalVersion>
+    <AssemblyVersion>1.1.6.0</AssemblyVersion>
+    <FileVersion>1.1.6.0</FileVersion>
+    <Version>1.1.6</Version>
+    <InformationalVersion>1.1.6</InformationalVersion>
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="10.9.*-*" IncludeAssets="compile" />
-    <PackageReference Include="Jellyfin.Model" Version="10.9.*-*" IncludeAssets="compile" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.*-*" IncludeAssets="compile" />
+    <PackageReference Include="Jellyfin.Model" Version="10.11.*-*" IncludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" IncludeAssets="compile" />
   </ItemGroup>
 

@@ -250,9 +250,15 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
                 progress?.Report(60);
 
-                // Construct local stream base URL using Jellyfin's default HTTP port (8096).
-                // HttpServerPortNumber was removed from ServerConfiguration in Jellyfin 10.9.
-                var baseUrl = "http://127.0.0.1:8096";
+                // Construct local stream base URL dynamically from Jellyfin network configuration.
+                var networkConfig = _configManager.GetConfiguration<MediaBrowser.Model.Configuration.NetworkConfiguration>("network");
+                var port = networkConfig?.InternalHttpPort ?? 8096;
+                var baseUrlPath = networkConfig?.BaseUrl ?? "";
+                if (!string.IsNullOrEmpty(baseUrlPath) && !baseUrlPath.StartsWith("/"))
+                {
+                    baseUrlPath = "/" + baseUrlPath;
+                }
+                var baseUrl = $"http://127.0.0.1:{port}{baseUrlPath}";
 
                 // Generate M3U file
                 var m3uPath = Path.Combine(dataPath, config.M3uFileName);

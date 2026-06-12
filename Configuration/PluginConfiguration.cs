@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel.Configuration
         public int Timeout { get; set; } = 30;
         public int OsType { get; set; } = 1; // 0 for pcweb, 1 for samsungtv
         public bool DownloadEpg { get; set; } = true;
-        public string EpgSourceUrl { get; set; } = "https://epg.pw/xmltv/epg_bg.xml";
+        public string EpgSourceUrl { get; set; } = "https://www.open-epg.com/files/bulgaria.xml";
         public bool Debug { get; set; } = false;
         public string BlockedGenres { get; set; } = "";
         
