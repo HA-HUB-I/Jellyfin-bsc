@@ -182,12 +182,12 @@ namespace Jellyfin.Plugin.BulsatcomChannel
     {
         private readonly ILogger<BulsatcomScheduledTask> _logger;
         private readonly IServerConfigurationManager _configManager;
-        private readonly IScheduledTaskManager _taskManager;
+        private readonly ITaskManager _taskManager;
 
         public BulsatcomScheduledTask(
             ILogger<BulsatcomScheduledTask> logger,
             IServerConfigurationManager configManager,
-            IScheduledTaskManager taskManager)
+            ITaskManager taskManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
