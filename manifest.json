@@ -9,6 +9,22 @@
     "overview": "This plugin automatically generates M3U playlist and XMLTV EPG files from Bulsatcom IPTV service. Features include credential validation, configurable refresh intervals, content filtering, error handling, and a modern configuration interface.",
     "versions": [
       {
+        "version": "1.2.2.0",
+        "changelog": "Release for Jellyfin 12.0 (.NET 10). Fixed Bulsatcom API program object deserialization. Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.2.0/plugin_net10.0.zip",
+        "checksum": "DC91B98CADE91077FA85222F873D92B7",
+        "timestamp": "2026-09-08T22:41:02Z"
+      },
+      {
+        "version": "1.2.2.0",
+        "changelog": "Release for Jellyfin 10.11 (.NET 9). Fixed Bulsatcom API program object deserialization. Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.2.0/plugin_net9.0.zip",
+        "checksum": "7F23DBEAD95B05DC2A5B03156ABB4B4D",
+        "timestamp": "2026-09-08T22:41:02Z"
+      },
+      {
         "version": "1.2.1.0",
         "changelog": "Release for Jellyfin 12.0 (.NET 10). Fixed Bulsatcom API program object deserialization. Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
         "targetAbi": "12.0.0.0",
