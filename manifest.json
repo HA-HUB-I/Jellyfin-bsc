@@ -13,16 +13,16 @@
         "changelog": "Release for Jellyfin 12.0 (.NET 10). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
         "targetAbi": "12.0.0.0",
         "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.0.0/plugin_net10.0.zip",
-        "checksum": "D90A63131B6878E082B6329FC1864A1C",
-        "timestamp": "2026-09-08T21:24:28Z"
+        "checksum": "574902AA0AE1C005B003171FD38E24D1",
+        "timestamp": "2026-09-08T21:27:02Z"
       },
       {
         "version": "1.2.0.0",
         "changelog": "Release for Jellyfin 10.11 (.NET 9). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.0.0/plugin_net9.0.zip",
-        "checksum": "364096451B407FA97F911C3BD0860FA8",
-        "timestamp": "2026-09-08T21:24:28Z"
+        "checksum": "3A21C9BAA14EEE5835A7EFEF5336EFEA",
+        "timestamp": "2026-09-08T21:27:02Z"
       },
       {
         "version": "1.1.5.0",
