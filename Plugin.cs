@@ -257,7 +257,12 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 progress?.Report(20);
 
                 // Create output directory
-                var dataPath = Plugin.Instance.DataFolderPath;
+                var dataPath = Plugin.Instance?.DataFolderPath;
+                if (string.IsNullOrEmpty(dataPath))
+                {
+                    _logger.LogError("Plugin DataFolderPath is not available");
+                    return;
+                }
                 _logger.LogInformation($"Files will be saved to: {dataPath}");
                 
                 if (!Directory.Exists(dataPath))
@@ -282,10 +287,32 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 progress?.Report(60);
 
                 // Construct local stream base URL dynamically from Jellyfin network configuration.
-                var networkConfig = _configManager.GetNetworkConfiguration() 
-                    ?? _configManager.GetConfiguration<MediaBrowser.Model.Configuration.NetworkConfiguration>("network");
-                var port = networkConfig?.InternalHttpPort ?? 8096;
-                var baseUrlPath = networkConfig?.BaseUrl ?? "";
+                int port = 8096;
+                string baseUrlPath = string.Empty;
+
+                try
+                {
+                    var netConfig = _configManager.GetConfiguration("network");
+                    if (netConfig != null)
+                    {
+                        var portProp = netConfig.GetType().GetProperty("InternalHttpPort");
+                        if (portProp?.GetValue(netConfig) is int p && p > 0)
+                        {
+                            port = p;
+                        }
+
+                        var baseProp = netConfig.GetType().GetProperty("BaseUrl");
+                        if (baseProp?.GetValue(netConfig) is string b)
+                        {
+                            baseUrlPath = b;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not resolve dynamic network config, falling back to default port 8096");
+                }
+
                 if (!string.IsNullOrEmpty(baseUrlPath) && !baseUrlPath.StartsWith("/"))
                 {
                     baseUrlPath = "/" + baseUrlPath;
@@ -554,7 +581,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                             if (refreshTask != null)
                             {
                                 _logger.LogInformation("M3U or EPG data changed. Triggering Jellyfin 'Refresh Guide' scheduled task...");
-                                _taskManager.Execute(refreshTask, new TaskOptions());
+                                _ = Task.Run(() => _taskManager.Execute(refreshTask, new TaskOptions()));
                             }
                             else
                             {
@@ -665,13 +692,13 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
-            // Run daily at 04:00 AM by default to avoid interrupting active prime-time TV viewing
+            // Run every 12 hours by default
             return new[]
             {
                 new TaskTriggerInfo
                 {
-                    Type = TaskTriggerInfo.TriggerDaily,
-                    TimeOfDayTicks = TimeSpan.FromHours(4).Ticks
+                    Type = TaskTriggerInfo.TriggerInterval,
+                    IntervalTicks = TimeSpan.FromHours(12).Ticks
                 }
             };
         }
