@@ -91,21 +91,22 @@
                     </div>
                 </div>
 
-                <div class="fieldDescription" style="padding: 1em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
-                    <strong>Generated files location:</strong><br/>
-                    <span style="font-family: monospace; font-size: 0.9em;">
-                        Linux: /var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/<br/>
-                        Docker: /config/plugins/Jellyfin.Plugin.BulsatcomChannel/<br/>
-                        Windows: C:\ProgramData\Jellyfin\Server\plugins\Jellyfin.Plugin.BulsatcomChannel\
-                    </span>
-                    <br/><br/>
-                    <strong>Full file paths for Jellyfin Live TV:</strong><br/>
-                    <span style="font-family: monospace; font-size: 0.9em;">
-                        M3U Tuner: /var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/bulsat1.m3u<br/>
-                        XMLTV EPG: /var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/bulsat1.xml
-                    </span>
-                    <br/><br/>
-                    <em>Configure the M3U path under Dashboard &gt; Live TV &gt; Tuner Devices (M3U Tuner), and the XMLTV path under TV Guide Data Providers (XMLTV).</em>
+                <div style="padding: 1.2em; background-color: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 1.5em; border-left: 4px solid #00a4dc;">
+                    <div style="font-weight: bold; margin-bottom: 0.5em;">Jellyfin Live TV Setup Paths (Linux):</div>
+                    
+                    <div style="margin-bottom: 0.8em;">
+                        <label style="display:block; font-size: 0.85em; color: #aaa; margin-bottom: 2px;">M3U Tuner Device File Path (Dashboard &gt; Live TV &gt; Tuner Devices):</label>
+                        <input type="text" readonly value="/var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/bulsat1.m3u" onclick="this.select(); navigator.clipboard.writeText(this.value);" style="width: 100%; padding: 8px; font-family: monospace; background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; color: #fff; cursor: pointer;" title="Click to copy path" />
+                    </div>
+
+                    <div style="margin-bottom: 0.8em;">
+                        <label style="display:block; font-size: 0.85em; color: #aaa; margin-bottom: 2px;">XMLTV TV Guide Data File Path (Dashboard &gt; Live TV &gt; TV Guide Data Providers):</label>
+                        <input type="text" readonly value="/var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/bulsat1.xml" onclick="this.select(); navigator.clipboard.writeText(this.value);" style="width: 100%; padding: 8px; font-family: monospace; background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; color: #fff; cursor: pointer;" title="Click to copy path" />
+                    </div>
+
+                    <div style="font-size: 0.85em; color: #bbb; line-height: 1.4;">
+                        <em>💡 Click either path above to automatically select and copy it to your clipboard. If using custom file names (above), the file name will match your configured M3U / EPG file name.</em>
+                    </div>
                 </div>
 
                 <br/>

@@ -339,7 +339,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     }
                     
                     var radioValue = channel.Radio ? "true" : "false";
-                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{radioValue}\" group-title=\"{channel.Genre}\" tvg-logo=\"{channel.EpgName}.png\" tvg-id=\"{channel.EpgName}\",{channel.Title}");
+                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{radioValue}\" group-title=\"{channel.Genre}\" tvg-id=\"{channel.EpgName}\" tvg-name=\"{channel.Title}\" tvg-chno=\"{channel.ChannelId}\" tvg-logo=\"{channel.EpgName}.png\",{channel.Title}");
                     
                     // Route streams through local redirect endpoint
                     var redirectUrl = $"{baseUrl}/Plugins/Bulsatcom/Stream/{channel.ChannelId}";
@@ -573,6 +573,31 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     {
                         await File.WriteAllTextAsync(epgPath, newEpgContent, cancellationToken);
                         _logger.LogInformation("Successfully updated EPG file: {Path}", epgPath);
+
+                        // Invalidate Jellyfin's internal XMLTV cache so it immediately reloads the new guide
+                        try
+                        {
+                            var xmltvCacheDir = Path.Combine(ApplicationPaths.CachePath, "xmltv");
+                            if (Directory.Exists(xmltvCacheDir))
+                            {
+                                foreach (var cacheFile in Directory.GetFiles(xmltvCacheDir, "*.xml"))
+                                {
+                                    try
+                                    {
+                                        File.Delete(cacheFile);
+                                        _logger.LogInformation("Invalidated cached XMLTV file: {Path}", cacheFile);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogDebug(ex, "Could not delete cached XMLTV file: {Path}", cacheFile);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "Error clearing Jellyfin XMLTV cache directory");
+                        }
                     }
                 }
 
