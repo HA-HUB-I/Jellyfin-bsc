@@ -501,10 +501,11 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                         int apiProgCount = 0;
                         foreach (var channel in channelsWithoutPrograms)
                         {
-                            if (string.IsNullOrWhiteSpace(channel.Program)) continue;
+                            var programTitle = channel.ProgramTitle;
+                            if (string.IsNullOrWhiteSpace(programTitle)) continue;
 
-                            var startFormatted = FormatXmltvDate(channel.Start);
-                            var stopFormatted = FormatXmltvDate(channel.Stop);
+                            var startFormatted = FormatXmltvDate(channel.EffectiveStart);
+                            var stopFormatted = FormatXmltvDate(channel.EffectiveStop);
 
                             if (string.IsNullOrEmpty(startFormatted))
                             {
@@ -522,15 +523,16 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                                 new XAttribute("channel", channel.EpgName ?? string.Empty),
                                 new XElement("title", 
                                     new XAttribute("lang", "bg"),
-                                    channel.Program
+                                    programTitle
                                 )
                             );
 
-                            if (!string.IsNullOrWhiteSpace(channel.Description))
+                            var desc = channel.EffectiveDescription;
+                            if (!string.IsNullOrWhiteSpace(desc))
                             {
                                 progEl.Add(new XElement("desc",
                                     new XAttribute("lang", "bg"),
-                                    channel.Description
+                                    desc
                                 ));
                             }
 

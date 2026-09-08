@@ -7,10 +7,10 @@
     <AssemblyName>Jellyfin.Plugin.BulsatcomChannel</AssemblyName>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
-    <Version>1.2.0</Version>
-    <InformationalVersion>1.2.0</InformationalVersion>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
+    <Version>1.2.1</Version>
+    <InformationalVersion>1.2.1</InformationalVersion>
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>

@@ -184,6 +184,90 @@ namespace Jellyfin.Plugin.BulsatcomChannel
     }
 
     /// <summary>
+    /// Represents current program information for a Bulsatcom channel
+    /// </summary>
+    public class BulsatcomProgram
+    {
+        [JsonPropertyName("title")]
+        public string? Title { get; set; }
+
+        [JsonPropertyName("desc")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("start")]
+        public string? Start { get; set; }
+
+        [JsonPropertyName("stop")]
+        public string? Stop { get; set; }
+
+        [JsonPropertyName("startts")]
+        public long? StartTs { get; set; }
+
+        [JsonPropertyName("stopts")]
+        public long? StopTs { get; set; }
+    }
+
+    /// <summary>
+    /// Flexible JSON converter for BulsatcomProgram supporting object, string, or null
+    /// </summary>
+    public class BulsatcomProgramJsonConverter : JsonConverter<BulsatcomProgram>
+    {
+        public override BulsatcomProgram? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return null;
+            }
+
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var title = reader.GetString();
+                return string.IsNullOrWhiteSpace(title) ? null : new BulsatcomProgram { Title = title };
+            }
+
+            if (reader.TokenType == JsonTokenType.StartObject)
+            {
+                using var doc = JsonDocument.ParseValue(ref reader);
+                var root = doc.RootElement;
+                var prog = new BulsatcomProgram();
+                if (root.TryGetProperty("title", out var titleProp) && titleProp.ValueKind == JsonValueKind.String)
+                {
+                    prog.Title = titleProp.GetString();
+                }
+                if (root.TryGetProperty("desc", out var descProp) && descProp.ValueKind == JsonValueKind.String)
+                {
+                    prog.Description = descProp.GetString();
+                }
+                if (root.TryGetProperty("start", out var startProp) && startProp.ValueKind == JsonValueKind.String)
+                {
+                    prog.Start = startProp.GetString();
+                }
+                if (root.TryGetProperty("stop", out var stopProp) && stopProp.ValueKind == JsonValueKind.String)
+                {
+                    prog.Stop = stopProp.GetString();
+                }
+                if (root.TryGetProperty("startts", out var startTsProp) && startTsProp.TryGetInt64(out var startts))
+                {
+                    prog.StartTs = startts;
+                }
+                if (root.TryGetProperty("stopts", out var stopTsProp) && stopTsProp.TryGetInt64(out var stopts))
+                {
+                    prog.StopTs = stopts;
+                }
+                return prog;
+            }
+
+            reader.Skip();
+            return null;
+        }
+
+        public override void Write(Utf8JsonWriter writer, BulsatcomProgram value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
+    }
+
+    /// <summary>
     /// Represents a Bulsatcom TV channel
     /// </summary>
     public class BulsatcomChannel
@@ -207,7 +291,8 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         public string? Genre { get; set; }
 
         [JsonPropertyName("program")]
-        public string? Program { get; set; }
+        [JsonConverter(typeof(BulsatcomProgramJsonConverter))]
+        public BulsatcomProgram? Program { get; set; }
 
         [JsonPropertyName("desc")]
         public string? Description { get; set; }
@@ -217,5 +302,17 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
         [JsonPropertyName("stop")]
         public string? Stop { get; set; }
+
+        [JsonIgnore]
+        public string? ProgramTitle => Program?.Title;
+
+        [JsonIgnore]
+        public string? EffectiveDescription => !string.IsNullOrWhiteSpace(Description) ? Description : Program?.Description;
+
+        [JsonIgnore]
+        public string? EffectiveStart => !string.IsNullOrWhiteSpace(Start) ? Start : Program?.Start;
+
+        [JsonIgnore]
+        public string? EffectiveStop => !string.IsNullOrWhiteSpace(Stop) ? Stop : Program?.Stop;
     }
 }

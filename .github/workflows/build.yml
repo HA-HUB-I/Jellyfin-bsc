@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 1.2.0.0)'
+        description: 'Version number (e.g., 1.2.1.0)'
         required: true
-        default: '1.2.0.0'
+        default: '1.2.1.0'
       create_release:
         description: 'Create GitHub Release'
         required: false
@@ -109,7 +109,7 @@ jobs:
              '.[0].versions = [
                 {
                   "version": $version,
-                  "changelog": "Release for Jellyfin 12.0 (.NET 10). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+                  "changelog": "Release for Jellyfin 12.0 (.NET 10). Fixed Bulsatcom API program object deserialization. Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
                   "targetAbi": "12.0.0.0",
                   "sourceUrl": $url_10,
                   "checksum": $md5_10,
@@ -117,7 +117,7 @@ jobs:
                 },
                 {
                   "version": $version,
-                  "changelog": "Release for Jellyfin 10.11 (.NET 9). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+                  "changelog": "Release for Jellyfin 10.11 (.NET 9). Fixed Bulsatcom API program object deserialization. Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
                   "targetAbi": "10.11.0.0",
                   "sourceUrl": $url_9,
                   "checksum": $md5_9,
