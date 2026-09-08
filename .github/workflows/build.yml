@@ -36,7 +36,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            8.0.x
+            9.0.x
             10.0.x
 
       - name: Determine version
@@ -69,42 +69,42 @@ jobs:
           (cd dist_net10 && zip -r ../plugin_net10.0.zip .)
           cp plugin_net10.0.zip plugin.zip
 
-          # Prepare net8.0 package for Jellyfin 10.11
-          mkdir -p "dist_net8/${PLUGIN_DIR}"
-          cp "bin/Release/net8.0/${PLUGIN_DIR}.dll" "dist_net8/${PLUGIN_DIR}/"
-          cp plugin.xml "dist_net8/${PLUGIN_DIR}/"
-          (cd dist_net8 && zip -r ../plugin_net8.0.zip .)
+          # Prepare net9.0 package for Jellyfin 10.11
+          mkdir -p "dist_net9/${PLUGIN_DIR}"
+          cp "bin/Release/net9.0/${PLUGIN_DIR}.dll" "dist_net9/${PLUGIN_DIR}/"
+          cp plugin.xml "dist_net9/${PLUGIN_DIR}/"
+          (cd dist_net9 && zip -r ../plugin_net9.0.zip .)
 
       - name: Calculate MD5 checksums
         id: checksum
         run: |
           MD5_10=$(md5sum plugin_net10.0.zip | cut -d ' ' -f 1)
-          MD5_8=$(md5sum plugin_net8.0.zip | cut -d ' ' -f 1)
+          MD5_9=$(md5sum plugin_net9.0.zip | cut -d ' ' -f 1)
           echo "md5_net10=${MD5_10^^}" >> $GITHUB_OUTPUT
-          echo "md5_net8=${MD5_8^^}" >> $GITHUB_OUTPUT
+          echo "md5_net9=${MD5_9^^}" >> $GITHUB_OUTPUT
           echo "MD5 .NET 10: ${MD5_10^^}"
-          echo "MD5 .NET 8: ${MD5_8^^}"
+          echo "MD5 .NET 9:  ${MD5_9^^}"
 
       - name: Update manifest
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           MD5_10="${{ steps.checksum.outputs.md5_net10 }}"
-          MD5_8="${{ steps.checksum.outputs.md5_net8 }}"
+          MD5_9="${{ steps.checksum.outputs.md5_net9 }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
           echo "Updating manifest with:"
           echo "  Version: $VERSION"
           echo "  Checksum .NET 10: $MD5_10"
-          echo "  Checksum .NET 8:  $MD5_8"
+          echo "  Checksum .NET 9:  $MD5_9"
           echo "  Timestamp: $TIMESTAMP"
           
           # Update manifest.json with both targetAbi entries
           jq --arg version "$VERSION" \
              --arg md5_10 "$MD5_10" \
-             --arg md5_8 "$MD5_8" \
+             --arg md5_9 "$MD5_9" \
              --arg timestamp "$TIMESTAMP" \
              --arg url_10 "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin_net10.0.zip" \
-             --arg url_8 "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin_net8.0.zip" \
+             --arg url_9 "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin_net9.0.zip" \
              '.[0].versions = [
                 {
                   "version": $version,
@@ -116,10 +116,10 @@ jobs:
                 },
                 {
                   "version": $version,
-                  "changelog": "Release for Jellyfin 10.11 (.NET 8). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+                  "changelog": "Release for Jellyfin 10.11 (.NET 9). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
                   "targetAbi": "10.11.0.0",
-                  "sourceUrl": $url_8,
-                  "checksum": $md5_8,
+                  "sourceUrl": $url_9,
+                  "checksum": $md5_9,
                   "timestamp": $timestamp
                 }
              ] + (.[0].versions | map(select(.version != $version)))' \
@@ -135,7 +135,7 @@ jobs:
           path: |
             plugin.zip
             plugin_net10.0.zip
-            plugin_net8.0.zip
+            plugin_net9.0.zip
             manifest.json
 
       - name: Create/Update Release
@@ -149,7 +149,7 @@ jobs:
             
             ### Compatibility
             - **Jellyfin 12.0+**: Download `plugin_net10.0.zip` (built for .NET 10, ABI `12.0.0.0`)
-            - **Jellyfin 10.11.x**: Download `plugin_net8.0.zip` (built for .NET 8, ABI `10.11.0.0`)
+            - **Jellyfin 10.11.x**: Download `plugin_net9.0.zip` (built for .NET 9, ABI `10.11.0.0`)
             
             ### Installation Instructions
             
@@ -159,7 +159,7 @@ jobs:
                - Restart Jellyfin
             
             2. **Manual Installation:**
-               - Download `plugin_net10.0.zip` (for Jellyfin 12) or `plugin_net8.0.zip` (for Jellyfin 10.11)
+               - Download `plugin_net10.0.zip` (for Jellyfin 12) or `plugin_net9.0.zip` (for Jellyfin 10.11)
                - Extract to your Jellyfin plugins directory
                - Restart Jellyfin
             
@@ -171,11 +171,11 @@ jobs:
             
             **MD5 Checksums:**
             - .NET 10 (Jellyfin 12): `${{ steps.checksum.outputs.md5_net10 }}`
-            - .NET 8 (Jellyfin 10.11): `${{ steps.checksum.outputs.md5_net8 }}`
+            - .NET 9 (Jellyfin 10.11): `${{ steps.checksum.outputs.md5_net9 }}`
           files: |
             plugin.zip
             plugin_net10.0.zip
-            plugin_net8.0.zip
+            plugin_net9.0.zip
           draft: false
           prerelease: false
 

@@ -24,7 +24,7 @@ This plugin runs as a scheduled task within Jellyfin. It logs into the Bulsatcom
 
 1. Download the compatible package from [Releases](https://github.com/HA-HUB-I/Jellyfin-bsc/releases):
    - **For Jellyfin 12.0+ (.NET 10):** Download `plugin_net10.0.zip`
-   - **For Jellyfin 10.11.x (.NET 8):** Download `plugin_net8.0.zip`
+   - **For Jellyfin 10.11.x (.NET 9):** Download `plugin_net9.0.zip`
 2. Extract to your Jellyfin plugins directory
 3. Restart Jellyfin
 4. Configure your username and password in plugin settings
@@ -114,10 +114,10 @@ The MD5 checksum in `manifest.json` is **automatically generated** by GitHub Act
 # Restore dependencies
 dotnet restore
 
-# Build the plugin for both .NET 10 (Jellyfin 12) and .NET 8 (Jellyfin 10.11)
+# Build the plugin for both .NET 10 (Jellyfin 12) and .NET 9 (Jellyfin 10.11)
 dotnet build --configuration Release
 
 # The compiled DLLs will be located in:
 # - Jellyfin 12: bin/Release/net10.0/Jellyfin.Plugin.BulsatcomChannel.dll
-# - Jellyfin 10.11: bin/Release/net8.0/Jellyfin.Plugin.BulsatcomChannel.dll
+# - Jellyfin 10.11: bin/Release/net9.0/Jellyfin.Plugin.BulsatcomChannel.dll
 ```
