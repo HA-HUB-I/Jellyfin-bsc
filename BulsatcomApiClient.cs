@@ -137,7 +137,12 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError($"Failed to get channels: {response.StatusCode}");
-                    return new List<BulsatcomChannel>();
+                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
+                        response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    {
+                        throw new UnauthorizedAccessException($"Bulsatcom session expired or unauthorized (HTTP {(int)response.StatusCode})");
+                    }
+                    throw new HttpRequestException($"Bulsatcom API returned error status: {response.StatusCode}");
                 }
 
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);

@@ -35,6 +35,10 @@ namespace Jellyfin.Plugin.BulsatcomChannel.Configuration
         
         // Scheduled task settings
         public bool EnableScheduledTask { get; set; } = true;
-        public int UpdateIntervalHours { get; set; } = 6;
+        public int UpdateIntervalHours { get; set; } = 12;
+
+        // Stability & Stream Protection settings
+        public bool EnableAutoGuideRefresh { get; set; } = true;
+        public int ChannelCacheDurationHours { get; set; } = 4;
     }
 }

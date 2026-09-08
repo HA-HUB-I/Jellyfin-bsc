@@ -6,13 +6,13 @@ env:
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 1.0.1)'
+        description: 'Version number (e.g., 1.2.0.0)'
         required: true
-        default: '1.0.1'
+        default: '1.2.0.0'
       create_release:
         description: 'Create GitHub Release'
         required: false
@@ -35,7 +35,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Determine version
         id: version
@@ -59,42 +61,68 @@ jobs:
       - name: Prepare package
         run: |
           PLUGIN_DIR="Jellyfin.Plugin.BulsatcomChannel"
-          mkdir -p "dist/${PLUGIN_DIR}"
-          cp "bin/Release/net8.0/${PLUGIN_DIR}.dll" "dist/${PLUGIN_DIR}/"
-          cp plugin.xml "dist/${PLUGIN_DIR}/"
 
-      - name: Create zip archive
-        run: |
-          cd dist
-          zip -r ../plugin.zip .
+          # Prepare net10.0 package for Jellyfin 12.0
+          mkdir -p "dist_net10/${PLUGIN_DIR}"
+          cp "bin/Release/net10.0/${PLUGIN_DIR}.dll" "dist_net10/${PLUGIN_DIR}/"
+          cp plugin.xml "dist_net10/${PLUGIN_DIR}/"
+          (cd dist_net10 && zip -r ../plugin_net10.0.zip .)
+          cp plugin_net10.0.zip plugin.zip
 
-      - name: Calculate MD5 checksum
+          # Prepare net8.0 package for Jellyfin 10.11
+          mkdir -p "dist_net8/${PLUGIN_DIR}"
+          cp "bin/Release/net8.0/${PLUGIN_DIR}.dll" "dist_net8/${PLUGIN_DIR}/"
+          cp plugin.xml "dist_net8/${PLUGIN_DIR}/"
+          (cd dist_net8 && zip -r ../plugin_net8.0.zip .)
+
+      - name: Calculate MD5 checksums
         id: checksum
         run: |
-          MD5_HASH=$(md5sum plugin.zip | cut -d ' ' -f 1)
-          echo "md5=${MD5_HASH^^}" >> $GITHUB_OUTPUT
-          echo "MD5 checksum: ${MD5_HASH^^}"
+          MD5_10=$(md5sum plugin_net10.0.zip | cut -d ' ' -f 1)
+          MD5_8=$(md5sum plugin_net8.0.zip | cut -d ' ' -f 1)
+          echo "md5_net10=${MD5_10^^}" >> $GITHUB_OUTPUT
+          echo "md5_net8=${MD5_8^^}" >> $GITHUB_OUTPUT
+          echo "MD5 .NET 10: ${MD5_10^^}"
+          echo "MD5 .NET 8: ${MD5_8^^}"
 
       - name: Update manifest
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          MD5_HASH="${{ steps.checksum.outputs.md5 }}"
+          MD5_10="${{ steps.checksum.outputs.md5_net10 }}"
+          MD5_8="${{ steps.checksum.outputs.md5_net8 }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
           echo "Updating manifest with:"
           echo "  Version: $VERSION"
-          echo "  Checksum: $MD5_HASH"
+          echo "  Checksum .NET 10: $MD5_10"
+          echo "  Checksum .NET 8:  $MD5_8"
           echo "  Timestamp: $TIMESTAMP"
           
-          # Update manifest.json
+          # Update manifest.json with both targetAbi entries
           jq --arg version "$VERSION" \
-             --arg checksum "$MD5_HASH" \
+             --arg md5_10 "$MD5_10" \
+             --arg md5_8 "$MD5_8" \
              --arg timestamp "$TIMESTAMP" \
-             --arg sourceUrl "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin.zip" \
-             '.[0].versions[0].version = $version | 
-              .[0].versions[0].checksum = $checksum | 
-              .[0].versions[0].timestamp = $timestamp |
-              .[0].versions[0].sourceUrl = $sourceUrl' \
+             --arg url_10 "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin_net10.0.zip" \
+             --arg url_8 "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v$VERSION/plugin_net8.0.zip" \
+             '.[0].versions = [
+                {
+                  "version": $version,
+                  "changelog": "Release for Jellyfin 12.0 (.NET 10). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+                  "targetAbi": "12.0.0.0",
+                  "sourceUrl": $url_10,
+                  "checksum": $md5_10,
+                  "timestamp": $timestamp
+                },
+                {
+                  "version": $version,
+                  "changelog": "Release for Jellyfin 10.11 (.NET 8). Stabilized streaming session with non-disruptive background updates (skips disk write and PVR tuner reload when playlist is unchanged), resilient session caching, and off-peak scheduling.",
+                  "targetAbi": "10.11.0.0",
+                  "sourceUrl": $url_8,
+                  "checksum": $md5_8,
+                  "timestamp": $timestamp
+                }
+             ] + (.[0].versions | map(select(.version != $version)))' \
              manifest.json > manifest_updated.json && mv manifest_updated.json manifest.json
           
           echo "Updated manifest.json:"
@@ -106,6 +134,8 @@ jobs:
           name: jellyfin-plugin-v${{ steps.version.outputs.version }}
           path: |
             plugin.zip
+            plugin_net10.0.zip
+            plugin_net8.0.zip
             manifest.json
 
       - name: Create/Update Release
@@ -117,6 +147,10 @@ jobs:
           body: |
             ## Jellyfin Bulsatcom File Generator Plugin v${{ steps.version.outputs.version }}
             
+            ### Compatibility
+            - **Jellyfin 12.0+**: Download `plugin_net10.0.zip` (built for .NET 10, ABI `12.0.0.0`)
+            - **Jellyfin 10.11.x**: Download `plugin_net8.0.zip` (built for .NET 8, ABI `10.11.0.0`)
+            
             ### Installation Instructions
             
             1. **Via Plugin Repository (Recommended):**
@@ -125,21 +159,23 @@ jobs:
                - Restart Jellyfin
             
             2. **Manual Installation:**
-               - Download `plugin.zip` from this release
+               - Download `plugin_net10.0.zip` (for Jellyfin 12) or `plugin_net8.0.zip` (for Jellyfin 10.11)
                - Extract to your Jellyfin plugins directory
                - Restart Jellyfin
             
-            ### Configuration
-            - Go to Plugins → Bulsatcom File Generator → Settings
-            - Enter your Bulsatcom credentials
-            - Configure refresh intervals and file settings
+            ### Configuration & Improvements
+            - Stream session stabilization: skips disk writes and tuner resets when M3U is unchanged.
+            - Prevents PVR clients (Kodi, etc.) from restarting during background refreshes.
+            - Resilient Bulsatcom API caching with stream fallback protection.
+            - Scheduled task runs daily at 04:00 AM off-peak by default.
             
-            ### Files Generated
-            - M3U Playlist: `bulsat.m3u`
-            - EPG XML: `bulsat.xml` 
-            
-            **MD5 Checksum:** `${{ steps.checksum.outputs.md5 }}`
-          files: plugin.zip
+            **MD5 Checksums:**
+            - .NET 10 (Jellyfin 12): `${{ steps.checksum.outputs.md5_net10 }}`
+            - .NET 8 (Jellyfin 10.11): `${{ steps.checksum.outputs.md5_net8 }}`
+          files: |
+            plugin.zip
+            plugin_net10.0.zip
+            plugin_net8.0.zip
           draft: false
           prerelease: false
 

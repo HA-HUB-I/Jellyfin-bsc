@@ -14,7 +14,9 @@ function onViewShow() {
         page.querySelector("#M3uFileName").value = config.M3uFileName || 'bulsatcom.m3u';
         page.querySelector("#EpgFileName").value = config.EpgFileName || 'bulsatcom.xml';
         page.querySelector("#EnableScheduledTask").checked = config.EnableScheduledTask || false;
-        page.querySelector("#UpdateIntervalHours").value = config.UpdateIntervalHours || 6;
+        page.querySelector("#EnableAutoGuideRefresh").checked = config.EnableAutoGuideRefresh !== false;
+        page.querySelector("#UpdateIntervalHours").value = config.UpdateIntervalHours || 12;
+        page.querySelector("#ChannelCacheDurationHours").value = config.ChannelCacheDurationHours || 4;
 
         Dashboard.hideLoadingMsg();
     });
@@ -30,7 +32,9 @@ function onSubmit(e) {
         config.M3uFileName = form.querySelector('#M3uFileName').value || 'bulsatcom.m3u';
         config.EpgFileName = form.querySelector('#EpgFileName').value || 'bulsatcom.xml';
         config.EnableScheduledTask = form.querySelector('#EnableScheduledTask').checked;
-        config.UpdateIntervalHours = parseInt(form.querySelector('#UpdateIntervalHours').value) || 6;
+        config.EnableAutoGuideRefresh = form.querySelector('#EnableAutoGuideRefresh').checked;
+        config.UpdateIntervalHours = parseInt(form.querySelector('#UpdateIntervalHours').value) || 12;
+        config.ChannelCacheDurationHours = parseInt(form.querySelector('#ChannelCacheDurationHours').value) || 4;
 
         ApiClient.updatePluginConfiguration(BulsatcomConfig.pluginUniqueId, config).then(function (result) {
             Dashboard.processServerConfigurationUpdateResult(result);

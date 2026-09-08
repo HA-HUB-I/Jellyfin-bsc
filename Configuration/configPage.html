@@ -56,13 +56,27 @@
                         <input is="emby-checkbox" type="checkbox" id="EnableScheduledTask" />
                         <span>Enable Automatic File Generation</span>
                     </label>
-                    <div class="fieldDescription checkboxFieldDescription">Automatically generate files every 6 hours</div>
+                    <div class="fieldDescription checkboxFieldDescription">Automatically generate M3U and EPG files via scheduled task.</div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="EnableAutoGuideRefresh" />
+                        <span>Smart Guide Refresh (Only when EPG changes)</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">Only notifies Jellyfin to refresh EPG when new program data is detected. Prevents restarting PVR clients and cutting active streams.</div>
                 </div>
 
                 <div class="inputContainer">
-                    <label class="inputLabel inputLabelUnfocused" for="UpdateIntervalHours">Update Interval (Hours)</label>
+                    <label class="inputLabel inputLabelUnfocused" for="UpdateIntervalHours">File Update Interval (Hours)</label>
                     <input is="emby-input" type="number" id="UpdateIntervalHours" name="UpdateIntervalHours" min="1" max="168" class="emby-input"/>
-                    <div class="fieldDescription">How often to update files (1-168 hours)</div>
+                    <div class="fieldDescription">How often to check for updates (recommended: 12-24 hours)</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="ChannelCacheDurationHours">Channel Stream Cache Duration (Hours)</label>
+                    <input is="emby-input" type="number" id="ChannelCacheDurationHours" name="ChannelCacheDurationHours" min="1" max="24" class="emby-input"/>
+                    <div class="fieldDescription">Duration to keep channel stream sources in memory without calling Bulsatcom API (recommended: 4 hours)</div>
                 </div>
 
                 <div class="verticalSection">

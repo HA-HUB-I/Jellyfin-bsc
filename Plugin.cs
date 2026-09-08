@@ -52,7 +52,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         }
 
         /// <summary>
-        /// Fetches channels list using thread-safe caching.
+        /// Fetches channels list using thread-safe caching with fallback protection.
         /// </summary>
         public async Task<List<BulsatcomChannel>> GetChannelsWithCacheAsync(ILogger logger, CancellationToken cancellationToken)
         {
@@ -62,16 +62,20 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 throw new InvalidOperationException("Bulsatcom username or password not configured.");
             }
 
+            var cacheDurationHours = config.ChannelCacheDurationHours > 0 ? config.ChannelCacheDurationHours : 4;
+            var cacheDuration = TimeSpan.FromHours(cacheDurationHours);
+
             lock (_cacheLock)
             {
-                if (_cachedChannels != null && _cachedChannels.Count > 0 && (DateTime.UtcNow - _lastCacheTime) < TimeSpan.FromMinutes(15))
+                if (_cachedChannels != null && _cachedChannels.Count > 0 && (DateTime.UtcNow - _lastCacheTime) < cacheDuration)
                 {
-                    logger.LogInformation("Using cached Bulsatcom channels list (age: {Age}s)", (DateTime.UtcNow - _lastCacheTime).TotalSeconds);
+                    logger.LogInformation("Using cached Bulsatcom channels list ({Count} channels, age: {Age:F0}s, TTL: {Ttl}h)",
+                        _cachedChannels.Count, (DateTime.UtcNow - _lastCacheTime).TotalSeconds, cacheDuration.TotalHours);
                     return _cachedChannels;
                 }
             }
 
-            logger.LogInformation("Cache expired or empty. Fetching fresh channel list from Bulsatcom API.");
+            logger.LogInformation("Channel cache expired or empty. Fetching fresh channel list from Bulsatcom API.");
             var apiClient = new BulsatcomApiClient(logger);
             
             string? session;
@@ -85,26 +89,53 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken);
             }
 
-            List<BulsatcomChannel> channels;
+            List<BulsatcomChannel>? channels = null;
             try
             {
                 channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken);
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning(ex, "Failed to get channels with cached session, trying login again.");
+                logger.LogWarning(ex, "Bulsatcom session expired or unauthorized. Re-authenticating.");
                 session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken);
                 channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken);
             }
-
-            lock (_cacheLock)
+            catch (Exception ex)
             {
-                _cachedSession = session;
-                _cachedChannels = channels;
-                _lastCacheTime = DateTime.UtcNow;
+                logger.LogWarning(ex, "Failed to refresh channels from Bulsatcom API due to network or server error.");
+                lock (_cacheLock)
+                {
+                    if (_cachedChannels != null && _cachedChannels.Count > 0)
+                    {
+                        logger.LogInformation("Preserving existing {Count} cached channels to protect ongoing streams and PVR playback.", _cachedChannels.Count);
+                        return _cachedChannels;
+                    }
+                }
+                throw;
             }
 
-            return channels;
+            if (channels != null && channels.Count > 0)
+            {
+                lock (_cacheLock)
+                {
+                    _cachedSession = session;
+                    _cachedChannels = channels;
+                    _lastCacheTime = DateTime.UtcNow;
+                }
+                return channels;
+            }
+            else
+            {
+                lock (_cacheLock)
+                {
+                    if (_cachedChannels != null && _cachedChannels.Count > 0)
+                    {
+                        logger.LogWarning("Bulsatcom API returned 0 channels. Preserving previous {Count} cached channels.", _cachedChannels.Count);
+                        return _cachedChannels;
+                    }
+                }
+                return channels ?? new List<BulsatcomChannel>();
+            }
         }
 
         /// <summary>
@@ -251,7 +282,8 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 progress?.Report(60);
 
                 // Construct local stream base URL dynamically from Jellyfin network configuration.
-                var networkConfig = _configManager.GetConfiguration<MediaBrowser.Model.Configuration.NetworkConfiguration>("network");
+                var networkConfig = _configManager.GetNetworkConfiguration() 
+                    ?? _configManager.GetConfiguration<MediaBrowser.Model.Configuration.NetworkConfiguration>("network");
                 var port = networkConfig?.InternalHttpPort ?? 8096;
                 var baseUrlPath = networkConfig?.BaseUrl ?? "";
                 if (!string.IsNullOrEmpty(baseUrlPath) && !baseUrlPath.StartsWith("/"))
@@ -280,12 +312,28 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     m3uContent.AppendLine(redirectUrl);
                 }
                 
-                await File.WriteAllTextAsync(m3uPath, m3uContent.ToString(), cancellationToken);
-                _logger.LogInformation($"Successfully generated M3U file with {channels.Count} channels: {m3uPath}");
+                var newM3uContent = m3uContent.ToString();
+                bool m3uChanged = true;
+                if (File.Exists(m3uPath))
+                {
+                    var existingM3u = await File.ReadAllTextAsync(m3uPath, cancellationToken);
+                    if (string.Equals(existingM3u, newM3uContent, StringComparison.Ordinal))
+                    {
+                        m3uChanged = false;
+                        _logger.LogInformation("M3U playlist content is unchanged. Skipping file write to prevent Live TV tuner reload and PVR client reset.");
+                    }
+                }
+
+                if (m3uChanged)
+                {
+                    await File.WriteAllTextAsync(m3uPath, newM3uContent, cancellationToken);
+                    _logger.LogInformation($"Successfully updated M3U file with {channels.Count} channels: {m3uPath}");
+                }
                 
                 progress?.Report(80);
 
                 // Generate EPG XML file
+                bool epgChanged = false;
                 if (config.DownloadEpg)
                 {
                     var epgPath = Path.Combine(dataPath, config.EpgFileName);
@@ -463,33 +511,65 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                         Indent = true,
                         Encoding = Encoding.UTF8
                     };
-                    using (var writer = System.Xml.XmlWriter.Create(epgPath, settings))
+
+                    string newEpgContent;
+                    using (var ms = new MemoryStream())
                     {
-                        doc.Save(writer);
+                        using (var writer = System.Xml.XmlWriter.Create(ms, settings))
+                        {
+                            doc.Save(writer);
+                        }
+                        newEpgContent = Encoding.UTF8.GetString(ms.ToArray());
                     }
-                    _logger.LogInformation("Successfully generated EPG file: {Path}", epgPath);
+
+                    epgChanged = true;
+                    if (File.Exists(epgPath))
+                    {
+                        var currentEpg = await File.ReadAllTextAsync(epgPath, cancellationToken);
+                        if (string.Equals(currentEpg, newEpgContent, StringComparison.Ordinal))
+                        {
+                            epgChanged = false;
+                            _logger.LogInformation("EPG XML content is identical to existing file. Skipping file write.");
+                        }
+                    }
+
+                    if (epgChanged)
+                    {
+                        await File.WriteAllTextAsync(epgPath, newEpgContent, cancellationToken);
+                        _logger.LogInformation("Successfully updated EPG file: {Path}", epgPath);
+                    }
                 }
 
                 progress?.Report(100);
-                _logger.LogInformation($"Bulsatcom file generation completed successfully. Files saved to: {dataPath}");
+                _logger.LogInformation($"Bulsatcom file generation task completed. Storage location: {dataPath}");
 
-                // Trigger Refresh Guide task in Jellyfin programmatically
-                try
+                // Trigger Refresh Guide task in Jellyfin ONLY if files actually changed
+                if (m3uChanged || epgChanged)
                 {
-                    var refreshTask = _taskManager.ScheduledTasks.FirstOrDefault(t => t.Name == "Refresh Guide");
-                    if (refreshTask != null)
+                    if (config.EnableAutoGuideRefresh)
                     {
-                        _logger.LogInformation("Triggering Jellyfin 'Refresh Guide' scheduled task...");
-                        _taskManager.Execute(refreshTask, new TaskOptions());
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Jellyfin 'Refresh Guide' scheduled task not found.");
+                        try
+                        {
+                            var refreshTask = _taskManager.ScheduledTasks.FirstOrDefault(t => t.Name == "Refresh Guide");
+                            if (refreshTask != null)
+                            {
+                                _logger.LogInformation("M3U or EPG data changed. Triggering Jellyfin 'Refresh Guide' scheduled task...");
+                                _taskManager.Execute(refreshTask, new TaskOptions());
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Jellyfin 'Refresh Guide' scheduled task not found.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error occurred while triggering Jellyfin 'Refresh Guide' scheduled task.");
+                        }
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogError(ex, "Error occurred while triggering Jellyfin 'Refresh Guide' scheduled task.");
+                    _logger.LogInformation("M3U and EPG are unchanged. Skipping 'Refresh Guide' to ensure active streams and PVR clients are not interrupted.");
                 }
             }
             catch (Exception ex)
@@ -585,13 +665,13 @@ namespace Jellyfin.Plugin.BulsatcomChannel
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
-            // Run every 6 hours by default
+            // Run daily at 04:00 AM by default to avoid interrupting active prime-time TV viewing
             return new[]
             {
                 new TaskTriggerInfo
                 {
-                    Type = TaskTriggerInfo.TriggerInterval,
-                    IntervalTicks = TimeSpan.FromHours(6).Ticks
+                    Type = TaskTriggerInfo.TriggerDaily,
+                    TimeOfDayTicks = TimeSpan.FromHours(4).Ticks
                 }
             };
         }
