@@ -13,6 +13,7 @@ function onViewShow() {
         page.querySelector("#Password").value = config.Password || '';
         page.querySelector("#M3uFileName").value = config.M3uFileName || 'bulsatcom.m3u';
         page.querySelector("#EpgFileName").value = config.EpgFileName || 'bulsatcom.xml';
+        page.querySelector("#EpgSourceUrl").value = config.EpgSourceUrl || '';
         page.querySelector("#EnableScheduledTask").checked = config.EnableScheduledTask || false;
         page.querySelector("#EnableAutoGuideRefresh").checked = config.EnableAutoGuideRefresh !== false;
         page.querySelector("#UpdateIntervalHours").value = config.UpdateIntervalHours || 12;
@@ -31,6 +32,7 @@ function onSubmit(e) {
         config.Password = form.querySelector('#Password').value;
         config.M3uFileName = form.querySelector('#M3uFileName').value || 'bulsatcom.m3u';
         config.EpgFileName = form.querySelector('#EpgFileName').value || 'bulsatcom.xml';
+        config.EpgSourceUrl = form.querySelector('#EpgSourceUrl').value;
         config.EnableScheduledTask = form.querySelector('#EnableScheduledTask').checked;
         config.EnableAutoGuideRefresh = form.querySelector('#EnableAutoGuideRefresh').checked;
         config.UpdateIntervalHours = parseInt(form.querySelector('#UpdateIntervalHours').value) || 12;

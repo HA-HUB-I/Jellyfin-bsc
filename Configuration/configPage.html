@@ -47,6 +47,12 @@
                     <div class="fieldDescription">Name for the generated EPG XML file</div>
                 </div>
 
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="EpgSourceUrl">External EPG Source URL (XMLTV or XML.GZ)</label>
+                    <input is="emby-input" type="text" id="EpgSourceUrl" name="EpgSourceUrl" placeholder="https://epgshare01.online/epgshare01/epg_ripper_BG1.xml.gz" class="emby-input"/>
+                    <div class="fieldDescription">Multi-day Bulgarian XMLTV EPG source to download and merge (e.g. epgshare01). If left blank, uses Bulsatcom live info.</div>
+                </div>
+
                   <div id="status" class="status">
                     <strong>Status:</strong> Plugin ready for configuration.
                 </div>
@@ -88,12 +94,18 @@
                 <div class="fieldDescription" style="padding: 1em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
                     <strong>Generated files location:</strong><br/>
                     <span style="font-family: monospace; font-size: 0.9em;">
-                        Windows: C:\ProgramData\Jellyfin\Server\data\plugins\configurations\Jellyfin.Plugin.BulsatcomChannel\<br/>
-                        Linux: /var/lib/jellyfin/data/plugins/configurations/Jellyfin.Plugin.BulsatcomChannel/<br/>
-                        Docker: /config/data/plugins/configurations/Jellyfin.Plugin.BulsatcomChannel/
+                        Linux: /var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/<br/>
+                        Docker: /config/plugins/Jellyfin.Plugin.BulsatcomChannel/<br/>
+                        Windows: C:\ProgramData\Jellyfin\Server\plugins\Jellyfin.Plugin.BulsatcomChannel\
                     </span>
                     <br/><br/>
-                    <em>Check the Jellyfin logs for the exact path and any authentication errors.</em>
+                    <strong>Full file paths for Jellyfin Live TV:</strong><br/>
+                    <span style="font-family: monospace; font-size: 0.9em;">
+                        M3U Tuner: /var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/bulsat1.m3u<br/>
+                        XMLTV EPG: /var/lib/jellyfin/plugins/Jellyfin.Plugin.BulsatcomChannel/bulsat1.xml
+                    </span>
+                    <br/><br/>
+                    <em>Configure the M3U path under Dashboard &gt; Live TV &gt; Tuner Devices (M3U Tuner), and the XMLTV path under TV Guide Data Providers (XMLTV).</em>
                 </div>
 
                 <br/>
