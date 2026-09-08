@@ -577,7 +577,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                         // Invalidate Jellyfin's internal XMLTV cache so it immediately reloads the new guide
                         try
                         {
-                            var xmltvCacheDir = Path.Combine(ApplicationPaths.CachePath, "xmltv");
+                            var xmltvCacheDir = Path.Combine(_configManager.ApplicationPaths.CachePath, "xmltv");
                             if (Directory.Exists(xmltvCacheDir))
                             {
                                 foreach (var cacheFile in Directory.GetFiles(xmltvCacheDir, "*.xml"))
