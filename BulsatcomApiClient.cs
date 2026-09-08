@@ -303,6 +303,15 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         [JsonPropertyName("stop")]
         public string? Stop { get; set; }
 
+        [JsonPropertyName("pg")]
+        public string? Pg { get; set; }
+
+        [JsonIgnore]
+        public bool IsAdult => string.Equals(Pg, "PG18", StringComparison.OrdinalIgnoreCase);
+
+        [JsonIgnore]
+        public string ParentalRating => IsAdult ? "18" : "0";
+
         [JsonIgnore]
         public string? ProgramTitle => Program?.Title;
 

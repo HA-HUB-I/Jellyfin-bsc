@@ -109,7 +109,7 @@ jobs:
              '.[0].versions = [
                 {
                   "version": $version,
-                  "changelog": "Release for Jellyfin 12.0 (.NET 10). Auto-invalidates Jellyfin XMLTV cache on EPG update, enhanced M3U channel metadata (tvg-name, tvg-chno), click-to-copy storage paths in config UI, and stream session stability.",
+                  "changelog": "Release for Jellyfin 12.0 (.NET 10). Persistent local channel logos serving via /Plugins/Bulsatcom/Logos/, PG18 parental rating tagging in M3U, and automatic logo package provisioning.",
                   "targetAbi": "12.0.0.0",
                   "sourceUrl": $url_10,
                   "checksum": $md5_10,
@@ -117,7 +117,7 @@ jobs:
                 },
                 {
                   "version": $version,
-                  "changelog": "Release for Jellyfin 10.11 (.NET 9). Auto-invalidates Jellyfin XMLTV cache on EPG update, enhanced M3U channel metadata (tvg-name, tvg-chno), click-to-copy storage paths in config UI, and stream session stability.",
+                  "changelog": "Release for Jellyfin 10.11 (.NET 9). Persistent local channel logos serving via /Plugins/Bulsatcom/Logos/, PG18 parental rating tagging in M3U, and automatic logo package provisioning.",
                   "targetAbi": "10.11.0.0",
                   "sourceUrl": $url_9,
                   "checksum": $md5_9,
@@ -138,6 +138,7 @@ jobs:
             plugin_net10.0.zip
             plugin_net9.0.zip
             manifest.json
+            bulsat_logos.zip
 
       - name: Create/Update Release
         if: github.event.inputs.create_release == 'true' || startsWith(github.ref, 'refs/tags/')
@@ -177,6 +178,7 @@ jobs:
             plugin.zip
             plugin_net10.0.zip
             plugin_net9.0.zip
+            bulsat_logos.zip
           draft: false
           prerelease: false
 

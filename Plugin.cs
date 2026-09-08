@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -278,6 +279,13 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     _logger.LogInformation($"Created data directory: {dataPath}");
                 }
 
+                // Ensure channel logos are cached locally for persistent offline display
+                var logosDir = Path.Combine(dataPath, "logos");
+                if (!Directory.Exists(logosDir) || Directory.GetFiles(logosDir, "*.png").Length < 10)
+                {
+                    await EnsureLogosDownloadedAsync(logosDir, cancellationToken);
+                }
+
                 progress?.Report(40);
 
                 // Fetch channels (uses caching internally)
@@ -339,7 +347,9 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     }
                     
                     var radioValue = channel.Radio ? "true" : "false";
-                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{radioValue}\" group-title=\"{channel.Genre}\" tvg-id=\"{channel.EpgName}\" tvg-name=\"{channel.Title}\" tvg-chno=\"{channel.ChannelId}\" tvg-logo=\"{channel.EpgName}.png\",{channel.Title}");
+                    var ratingAttr = channel.IsAdult ? " tvg-rating=\"18\" parental-rating=\"18\"" : " tvg-rating=\"0\" parental-rating=\"0\"";
+                    var logoUrl = $"{baseUrl}/Plugins/Bulsatcom/Logos/{channel.EpgName}.png";
+                    m3uContent.AppendLine($"#EXTINF:{channel.ChannelId} radio=\"{radioValue}\" group-title=\"{channel.Genre}\" tvg-id=\"{channel.EpgName}\" tvg-name=\"{channel.Title}\" tvg-chno=\"{channel.ChannelId}\" tvg-logo=\"{logoUrl}\"{ratingAttr},{channel.Title}");
                     
                     // Route streams through local redirect endpoint
                     var redirectUrl = $"{baseUrl}/Plugins/Bulsatcom/Stream/{channel.ChannelId}";
@@ -387,7 +397,8 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                     {
                         var channelEl = new XElement("channel",
                             new XAttribute("id", channel.EpgName ?? string.Empty),
-                            new XElement("display-name", channel.Title ?? string.Empty)
+                            new XElement("display-name", channel.Title ?? string.Empty),
+                            new XElement("icon", new XAttribute("src", $"{baseUrl}/Plugins/Bulsatcom/Logos/{channel.EpgName}.png"))
                         );
                         tvElement.Add(channelEl);
                     }
@@ -637,6 +648,49 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             {
                 _logger.LogError(ex, "Error during Bulsatcom file generation");
                 throw;
+            }
+        }
+
+        private async Task EnsureLogosDownloadedAsync(string logosDir, CancellationToken cancellationToken)
+        {
+            try
+            {
+                Directory.CreateDirectory(logosDir);
+                _logger.LogInformation("Checking for local Bulsatcom logos package...");
+
+                var zipUrl = "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.4.0/bulsat_logos.zip";
+                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Jellyfin-Bulsatcom-Plugin");
+
+                using var response = await httpClient.GetAsync(zipUrl, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Logos package not downloaded (HTTP {Status}). Using locally present logos in {Path}", response.StatusCode, logosDir);
+                    return;
+                }
+
+                var zipBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+                using var ms = new MemoryStream(zipBytes);
+                using var archive = new ZipArchive(ms, ZipArchiveMode.Read);
+
+                int extracted = 0;
+                foreach (var entry in archive.Entries)
+                {
+                    if (string.IsNullOrEmpty(entry.Name) || !entry.Name.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var destPath = Path.Combine(logosDir, entry.Name);
+                    entry.ExtractToFile(destPath, overwrite: true);
+                    extracted++;
+                }
+
+                _logger.LogInformation("Successfully extracted {Count} channel logos to {Path}", extracted, logosDir);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not auto-download logos pack (using locally present logos).");
             }
         }
 

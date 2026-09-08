@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -51,6 +52,33 @@ namespace Jellyfin.Plugin.BulsatcomChannel.Api
                 _logger.LogError(ex, "Error occurred while redirecting channel ID: {ChannelId}", channelId);
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Serves persistent channel logo image from local storage
+        /// </summary>
+        [HttpGet("Logos/{logoName}")]
+        public IActionResult GetLogo(string logoName)
+        {
+            if (Plugin.Instance == null)
+            {
+                return NotFound();
+            }
+
+            var safeName = Path.GetFileName(logoName);
+            if (!safeName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                safeName += ".png";
+            }
+
+            var logoPath = Path.Combine(Plugin.Instance.DataFolderPath, "logos", safeName);
+            if (System.IO.File.Exists(logoPath))
+            {
+                Response.Headers["Cache-Control"] = "public, max-age=31536000";
+                return PhysicalFile(logoPath, "image/png");
+            }
+
+            return NotFound();
         }
     }
 }
