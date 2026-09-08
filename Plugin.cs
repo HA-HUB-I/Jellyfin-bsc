@@ -240,7 +240,14 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             {
                 progress?.Report(0);
                 
-                var config = Plugin.Instance?.Configuration;
+                var pluginInstance = Plugin.Instance;
+                if (pluginInstance == null)
+                {
+                    _logger.LogError("Plugin instance is null");
+                    return;
+                }
+
+                var config = pluginInstance.Configuration;
                 if (config == null)
                 {
                     _logger.LogError("Plugin configuration is null");
@@ -257,7 +264,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 progress?.Report(20);
 
                 // Create output directory
-                var dataPath = Plugin.Instance?.DataFolderPath;
+                var dataPath = pluginInstance.DataFolderPath;
                 if (string.IsNullOrEmpty(dataPath))
                 {
                     _logger.LogError("Plugin DataFolderPath is not available");
@@ -274,7 +281,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 progress?.Report(40);
 
                 // Fetch channels (uses caching internally)
-                var channels = await Plugin.Instance.GetChannelsWithCacheAsync(_logger, cancellationToken);
+                var channels = await pluginInstance.GetChannelsWithCacheAsync(_logger, cancellationToken);
                 
                 if (channels == null || channels.Count == 0)
                 {
@@ -697,7 +704,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             {
                 new TaskTriggerInfo
                 {
-                    Type = TaskTriggerInfo.TriggerInterval,
+                    Type = TaskTriggerInfoType.IntervalTrigger,
                     IntervalTicks = TimeSpan.FromHours(12).Ticks
                 }
             };
