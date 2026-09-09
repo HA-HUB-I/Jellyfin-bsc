@@ -32,9 +32,18 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         private bool _disposed = false;
 
         private readonly object _cacheLock = new object();
+        private readonly SemaphoreSlim _channelRefreshSemaphore = new SemaphoreSlim(1, 1);
         private string? _cachedSession;
         private List<BulsatcomChannel>? _cachedChannels;
         private DateTime _lastCacheTime = DateTime.MinValue;
+
+        private static readonly HttpClient _probeClient = new HttpClient(new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(2)
+        };
 
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
             : base(applicationPaths, xmlSerializer)
@@ -43,19 +52,96 @@ namespace Jellyfin.Plugin.BulsatcomChannel
         }
 
         /// <summary>
-        /// Gets the active Bulsatcom stream URL, using cache and refreshing session if needed.
+        /// Validates that a stream URL is reachable, returns 200 OK, and does not redirect to /no_access/limits.
+        /// </summary>
+        public async Task<bool> IsStreamUrlValidAsync(string streamUrl, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(streamUrl))
+            {
+                return false;
+            }
+
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Head, streamUrl);
+                using var response = await _probeClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Found ||
+                    response.StatusCode == System.Net.HttpStatusCode.Redirect ||
+                    response.StatusCode == System.Net.HttpStatusCode.MovedPermanently)
+                {
+                    var location = response.Headers.Location?.ToString() ?? string.Empty;
+                    if (location.Contains("no_access", StringComparison.OrdinalIgnoreCase) ||
+                        location.Contains("limits", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the active Bulsatcom stream URL, ensuring fresh token validity and automatic recovery.
         /// </summary>
         public async Task<string?> GetStreamUrlAsync(string channelId, ILogger logger, CancellationToken cancellationToken)
         {
-            var channels = await GetChannelsWithCacheAsync(logger, cancellationToken);
+            // Stream tokens on Bulsatcom CDN have ~60min lifespan.
+            // Using a short stream cache TTL (e.g. 5 minutes) ensures that any stream start or
+            // automatic reconnect after a session timeout always receives a fresh, active token.
+            var streamCacheTtl = TimeSpan.FromMinutes(5);
+            var channels = await GetChannelsWithCacheAsync(logger, cancellationToken, streamCacheTtl).ConfigureAwait(false);
             var channel = channels.FirstOrDefault(c => c.ChannelId == channelId);
-            return channel?.Sources;
+            var streamUrl = channel?.Sources;
+
+            // Pre-validate the stream URL with a fast HEAD probe to catch expired tokens or dead CDN nodes
+            bool isValid = !string.IsNullOrEmpty(streamUrl) && await IsStreamUrlValidAsync(streamUrl, cancellationToken).ConfigureAwait(false);
+
+            if (!isValid)
+            {
+                logger.LogWarning("Stream URL for channel ID {ChannelId} is expired, unreachable, or returned no_access. Forcing fresh re-authentication and channel fetch...", channelId);
+
+                // Force an immediate refresh from Bulsatcom API
+                channels = await GetChannelsWithCacheAsync(logger, cancellationToken, TimeSpan.Zero, forceRefresh: true).ConfigureAwait(false);
+                channel = channels.FirstOrDefault(c => c.ChannelId == channelId);
+                streamUrl = channel?.Sources;
+
+                if (!string.IsNullOrEmpty(streamUrl))
+                {
+                    logger.LogInformation("Successfully acquired fresh stream URL for channel ID {ChannelId} after refresh.", channelId);
+                }
+            }
+
+            return streamUrl;
         }
 
         /// <summary>
         /// Fetches channels list using thread-safe caching with fallback protection.
         /// </summary>
-        public async Task<List<BulsatcomChannel>> GetChannelsWithCacheAsync(ILogger logger, CancellationToken cancellationToken)
+        public Task<List<BulsatcomChannel>> GetChannelsWithCacheAsync(ILogger logger, CancellationToken cancellationToken)
+        {
+            return GetChannelsWithCacheAsync(logger, cancellationToken, null, false);
+        }
+
+        /// <summary>
+        /// Fetches channels list using thread-safe caching with custom TTL and force refresh options.
+        /// </summary>
+        public async Task<List<BulsatcomChannel>> GetChannelsWithCacheAsync(
+            ILogger logger, 
+            CancellationToken cancellationToken, 
+            TimeSpan? maxCacheAge = null, 
+            bool forceRefresh = false)
         {
             var config = Configuration;
             if (string.IsNullOrWhiteSpace(config.Username) || string.IsNullOrWhiteSpace(config.Password))
@@ -63,79 +149,107 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 throw new InvalidOperationException("Bulsatcom username or password not configured.");
             }
 
-            var cacheDurationHours = config.ChannelCacheDurationHours > 0 ? config.ChannelCacheDurationHours : 4;
-            var cacheDuration = TimeSpan.FromHours(cacheDurationHours);
+            var cacheDuration = maxCacheAge ?? TimeSpan.FromHours(config.ChannelCacheDurationHours > 0 ? config.ChannelCacheDurationHours : 4);
 
-            lock (_cacheLock)
+            if (!forceRefresh)
             {
-                if (_cachedChannels != null && _cachedChannels.Count > 0 && (DateTime.UtcNow - _lastCacheTime) < cacheDuration)
+                lock (_cacheLock)
                 {
-                    logger.LogInformation("Using cached Bulsatcom channels list ({Count} channels, age: {Age:F0}s, TTL: {Ttl}h)",
-                        _cachedChannels.Count, (DateTime.UtcNow - _lastCacheTime).TotalSeconds, cacheDuration.TotalHours);
-                    return _cachedChannels;
+                    if (_cachedChannels != null && _cachedChannels.Count > 0 && (DateTime.UtcNow - _lastCacheTime) < cacheDuration)
+                    {
+                        logger.LogInformation("Using cached Bulsatcom channels list ({Count} channels, age: {Age:F0}s, TTL: {Ttl}s)",
+                            _cachedChannels.Count, (DateTime.UtcNow - _lastCacheTime).TotalSeconds, cacheDuration.TotalSeconds);
+                        return _cachedChannels;
+                    }
                 }
             }
 
-            logger.LogInformation("Channel cache expired or empty. Fetching fresh channel list from Bulsatcom API.");
-            var apiClient = new BulsatcomApiClient(logger);
-            
-            string? session;
-            lock (_cacheLock)
-            {
-                session = _cachedSession;
-            }
-
-            if (string.IsNullOrEmpty(session))
-            {
-                session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken);
-            }
-
-            List<BulsatcomChannel>? channels = null;
+            await _channelRefreshSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning(ex, "Bulsatcom session expired or unauthorized. Re-authenticating.");
-                session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken);
-                channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to refresh channels from Bulsatcom API due to network or server error.");
-                lock (_cacheLock)
+                // Double-check cache inside semaphore
+                if (!forceRefresh)
                 {
-                    if (_cachedChannels != null && _cachedChannels.Count > 0)
+                    lock (_cacheLock)
                     {
-                        logger.LogInformation("Preserving existing {Count} cached channels to protect ongoing streams and PVR playback.", _cachedChannels.Count);
-                        return _cachedChannels;
+                        if (_cachedChannels != null && _cachedChannels.Count > 0 && (DateTime.UtcNow - _lastCacheTime) < cacheDuration)
+                        {
+                            return _cachedChannels;
+                        }
                     }
                 }
-                throw;
-            }
 
-            if (channels != null && channels.Count > 0)
-            {
+                logger.LogInformation("Channel cache expired or forced refresh (forceRefresh: {ForceRefresh}). Fetching fresh channels from Bulsatcom API.", forceRefresh);
+                var apiClient = new BulsatcomApiClient(logger);
+                
+                string? session;
                 lock (_cacheLock)
                 {
-                    _cachedSession = session;
-                    _cachedChannels = channels;
-                    _lastCacheTime = DateTime.UtcNow;
+                    session = forceRefresh ? null : _cachedSession;
                 }
-                return channels;
-            }
-            else
-            {
-                lock (_cacheLock)
+
+                if (string.IsNullOrEmpty(session))
                 {
-                    if (_cachedChannels != null && _cachedChannels.Count > 0)
+                    session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken).ConfigureAwait(false);
+                }
+
+                List<BulsatcomChannel>? channels = null;
+                try
+                {
+                    channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken).ConfigureAwait(false);
+                    if (channels == null || channels.Count == 0)
                     {
-                        logger.LogWarning("Bulsatcom API returned 0 channels. Preserving previous {Count} cached channels.", _cachedChannels.Count);
-                        return _cachedChannels;
+                        logger.LogWarning("Bulsatcom API returned 0 channels. Session may have expired silently. Re-authenticating...");
+                        session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken).ConfigureAwait(false);
+                        channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken).ConfigureAwait(false);
                     }
                 }
-                return channels ?? new List<BulsatcomChannel>();
+                catch (UnauthorizedAccessException ex)
+                {
+                    logger.LogWarning(ex, "Bulsatcom session expired or unauthorized. Re-authenticating.");
+                    session = await apiClient.LoginAsync(config.Username, config.Password, config.OsType, cancellationToken).ConfigureAwait(false);
+                    channels = await apiClient.GetChannelsAsync(session, config.OsType, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to refresh channels from Bulsatcom API due to network or server error.");
+                    lock (_cacheLock)
+                    {
+                        if (_cachedChannels != null && _cachedChannels.Count > 0)
+                        {
+                            logger.LogInformation("Preserving existing {Count} cached channels to protect ongoing streams and PVR playback.", _cachedChannels.Count);
+                            return _cachedChannels;
+                        }
+                    }
+                    throw;
+                }
+
+                if (channels != null && channels.Count > 0)
+                {
+                    lock (_cacheLock)
+                    {
+                        _cachedSession = session;
+                        _cachedChannels = channels;
+                        _lastCacheTime = DateTime.UtcNow;
+                    }
+                    return channels;
+                }
+                else
+                {
+                    lock (_cacheLock)
+                    {
+                        if (_cachedChannels != null && _cachedChannels.Count > 0)
+                        {
+                            logger.LogWarning("Bulsatcom API returned 0 channels. Preserving previous {Count} cached channels.", _cachedChannels.Count);
+                            return _cachedChannels;
+                        }
+                    }
+                    return channels ?? new List<BulsatcomChannel>();
+                }
+            }
+            finally
+            {
+                _channelRefreshSemaphore.Release();
             }
         }
 
@@ -162,6 +276,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 if (disposing)
                 {
                     // Clean up managed resources
+                    _channelRefreshSemaphore?.Dispose();
                     Instance = null;
                 }
                 _disposed = true;

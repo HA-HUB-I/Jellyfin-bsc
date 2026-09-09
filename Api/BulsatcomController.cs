@@ -44,7 +44,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel.Api
                     return NotFound($"Channel {channelId} stream not found");
                 }
 
-                _logger.LogDebug("Redirecting channel {ChannelId} to: {StreamUrl}", channelId, streamUrl);
+                _logger.LogInformation("Redirecting channel {ChannelId} to: {StreamUrl}", channelId, streamUrl);
                 return Redirect(streamUrl);
             }
             catch (Exception ex)
