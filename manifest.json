@@ -9,6 +9,22 @@
     "overview": "This plugin automatically generates M3U playlist and XMLTV EPG files from Bulsatcom IPTV service. Features include credential validation, configurable refresh intervals, content filtering, error handling, and a modern configuration interface.",
     "versions": [
       {
+        "version": "1.2.6.0",
+        "changelog": "Release for Jellyfin 12.0 (.NET 10). Persistent local channel logos serving via /Plugins/Bulsatcom/Logos/, PG18 parental rating tagging in M3U, and automatic logo package provisioning.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.6.0/plugin_net10.0.zip",
+        "checksum": "4059E73DC348D1F49ED9E58357317951",
+        "timestamp": "2026-09-09T19:47:06Z"
+      },
+      {
+        "version": "1.2.6.0",
+        "changelog": "Release for Jellyfin 10.11 (.NET 9). Persistent local channel logos serving via /Plugins/Bulsatcom/Logos/, PG18 parental rating tagging in M3U, and automatic logo package provisioning.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.6.0/plugin_net9.0.zip",
+        "checksum": "14C40BB1965E785E94E83C9F91320536",
+        "timestamp": "2026-09-09T19:47:06Z"
+      },
+      {
         "version": "1.2.5.0",
         "changelog": "Release for Jellyfin 12.0 (.NET 10). Persistent local channel logos serving via /Plugins/Bulsatcom/Logos/, PG18 parental rating tagging in M3U, and automatic logo package provisioning.",
         "targetAbi": "12.0.0.0",
