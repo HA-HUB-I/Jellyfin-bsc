@@ -19,8 +19,10 @@ fix.md
 # OS files
 .DS_Store
 Thumbs.db
-!Readme.md
 *.md
+!README.md
+!Readme.md
+!CONTRIBUTING.md
 
 # Local logo work directories and private agent documentation
 bulsat_logos/

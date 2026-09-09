@@ -2,6 +2,12 @@
 
 This plugin for Jellyfin periodically generates an M3U playlist and an XMLTV EPG file from the Bulsatcom IPTV service.
 
+> [!IMPORTANT]
+> ### ⚖️ Disclaimer / Отказ от отговорност
+> **EN:** This project is an independent, community-driven open-source plugin and is **not affiliated with, endorsed by, sponsored by, or associated with Bulsatcom EAD (Булсатком)** in any way. This plugin **does not provide, broadcast, host, retransmit, or resell any media streams, IPTV services, or television content**. It is merely a helper utility that allows existing, paying Bulsatcom subscribers to generate local playlist and EPG files for their own personal, legal use with their own valid account credentials.
+>
+> **BG:** Този проект е независима open-source разработка с отворен код и **няма никаква връзка, одобрение, спонсорство или обвързаност с „Булсатком“ ЕАД**. Добавката **НЕ предоставя, НЕ излъчва, НЕ хоства, НЕ препредава и НЕ продава телевизионни потоци, IPTV абонаменти или съдържание**. Тя представлява единствено софтуерен инструмент за съществуващи абонати на Булсатком, който им позволява да генерират локални файлове с плейлисти и програмно ръководство за лична, законна употреба чрез собствените им потребителски данни за достъп.
+
 ## Screenshots
 
 <p align="center">
@@ -131,3 +137,11 @@ dotnet build --configuration Release
 # - Jellyfin 12: bin/Release/net10.0/Jellyfin.Plugin.BulsatcomChannel.dll
 # - Jellyfin 10.11: bin/Release/net9.0/Jellyfin.Plugin.BulsatcomChannel.dll
 ```
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests, opening issues, or suggesting improvements.
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE). See the [LICENSE](LICENSE) file for the full license text.
