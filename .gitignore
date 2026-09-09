@@ -22,8 +22,11 @@ Thumbs.db
 !Readme.md
 *.md
 
-# Local logo work directories
+# Local logo work directories and private agent documentation
 bulsat_logos/
 original.zip
 filter-screen/
+.agent/
+.agents/
+docs/
 
