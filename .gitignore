@@ -22,3 +22,7 @@ Thumbs.db
 !Readme.md
 *.md
 
+# Local logo work directories
+bulsat_logos/
+original.zip
+

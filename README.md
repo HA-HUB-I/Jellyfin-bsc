@@ -2,6 +2,16 @@
 
 This plugin for Jellyfin periodically generates an M3U playlist and an XMLTV EPG file from the Bulsatcom IPTV service.
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshot/Channel.jpg" width="31%" alt="Live TV Channels" />
+  &nbsp;
+  <img src="screenshot/EPG.jpg" width="31%" alt="Electronic Program Guide" />
+  &nbsp;
+  <img src="screenshot/Program.jpg" width="31%" alt="Live TV Programs" />
+</p>
+
 ## How it works
 
 This plugin runs as a scheduled task within Jellyfin. It logs into the Bulsatcom API, fetches the channel list and program guide, and saves the data as `bulsat.m3u` and `bulsat.xml` files in the plugin's data directory.

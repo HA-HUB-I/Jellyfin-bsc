@@ -485,6 +485,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                                         {
                                             var newProg = new XElement(progEl);
                                             newProg.SetAttributeValue("channel", bulsatEpgName);
+                                            EnhanceProgramCategories(newProg);
                                             tvElement.Add(newProg);
                                             programmeCount++;
                                         }
@@ -538,6 +539,14 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                                 )
                             );
 
+                            if (!string.IsNullOrWhiteSpace(channel.Genre))
+                            {
+                                progEl.Add(new XElement("category",
+                                    new XAttribute("lang", "bg"),
+                                    channel.Genre
+                                ));
+                            }
+
                             var desc = channel.EffectiveDescription;
                             if (!string.IsNullOrWhiteSpace(desc))
                             {
@@ -547,6 +556,7 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                                 ));
                             }
 
+                            EnhanceProgramCategories(progEl);
                             tvElement.Add(progEl);
                             apiProgCount++;
                         }
@@ -656,9 +666,17 @@ namespace Jellyfin.Plugin.BulsatcomChannel
             try
             {
                 Directory.CreateDirectory(logosDir);
+                var existingLogos = Directory.GetFiles(logosDir, "*.png");
+                if (existingLogos.Length >= 260)
+                {
+                    _logger.LogInformation("Channel logos already present in {Path} ({Count} logos). Skipping download.", logosDir, existingLogos.Length);
+                    return;
+                }
+
                 _logger.LogInformation("Checking for local Bulsatcom logos package...");
 
-                var zipUrl = "https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/v1.2.4.0/bulsat_logos.zip";
+                var versionStr = Plugin.Instance?.Version != null ? $"v{Plugin.Instance.Version}" : "latest";
+                var zipUrl = $"https://github.com/HA-HUB-I/Jellyfin-bsc/releases/download/{versionStr}/bulsat_logos.zip";
                 using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "Jellyfin-Bulsatcom-Plugin");
 
@@ -776,6 +794,84 @@ namespace Jellyfin.Plugin.BulsatcomChannel
                 }
             }
             return sb.ToString();
+        }
+
+        private static void EnhanceProgramCategories(XElement progEl)
+        {
+            var categories = progEl.Elements("category").Select(c => c.Value).ToList();
+            var title = progEl.Element("title")?.Value ?? string.Empty;
+            var fullText = string.Join(" ", categories) + " " + title;
+
+            bool hasCategory(string name) => categories.Any(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase));
+
+            // Movie
+            if ((fullText.IndexOf("филм", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("movie", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("кино", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("Movie"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "Movie"));
+            }
+
+            // Series
+            if ((fullText.IndexOf("сериал", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("series", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("серии", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("епизод", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("сезон", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("Series"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "Series"));
+                if (progEl.Element("episode-num") == null)
+                {
+                    var m = System.Text.RegularExpressions.Regex.Match(title, @"([Сс]езон\s*\d+)?\s*,?\s*([Ее]п\.\s*\d+)");
+                    var epText = m.Success ? m.Value.Trim() : "Епизод";
+                    progEl.Add(new XElement("episode-num", new XAttribute("system", "onscreen"), epText));
+                }
+            }
+
+            // Sports
+            if ((fullText.IndexOf("спорт", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("sport", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("мач", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("футбол", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("formula", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("лига", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("Sports"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "Sports"));
+            }
+
+            // News
+            if ((fullText.IndexOf("новини", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("news", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("емисия", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("информацион", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("News"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "News"));
+            }
+
+            // Kids
+            if ((fullText.IndexOf("детско", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("kids", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("анимаци", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("children", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("cartoon", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("Kids"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "Kids"));
+            }
+
+            // Documentary
+            if ((fullText.IndexOf("научно", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("документ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("documentary", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("Documentary"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "Documentary"));
+            }
+
+            // Music
+            if ((fullText.IndexOf("музик", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 fullText.IndexOf("music", StringComparison.OrdinalIgnoreCase) >= 0) && !hasCategory("Music"))
+            {
+                progEl.Add(new XElement("category", new XAttribute("lang", "en"), "Music"));
+            }
         }
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
